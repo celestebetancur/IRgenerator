@@ -1,0 +1,315 @@
+{
+  "info": {
+    "name": "small_studio_room",
+    "sample_rate": 48000,
+    "channels": 1,
+    "length_s": 0.60625,
+    "t60_bands": {
+      "63.0": 0.284,
+      "125.0": 0.248,
+      "250.0": 0.229,
+      "500.0": 0.213,
+      "1000.0": 0.175,
+      "2000.0": 0.167,
+      "4000.0": 0.187,
+      "8000.0": 0.172,
+      "16000.0": 0.136
+    },
+    "room_volume_m3": 59.7,
+    "room_surface_m2": 94.72,
+    "t60_room_bands": {
+      "63.0": 0.284,
+      "125.0": 0.248,
+      "250.0": 0.229,
+      "500.0": 0.213,
+      "1000.0": 0.175,
+      "2000.0": 0.167,
+      "4000.0": 0.187,
+      "8000.0": 0.172,
+      "16000.0": 0.136
+    },
+    "mixing_time_ms": 24.6,
+    "crossover_ms": 24.6,
+    "crossover_width_ms": 12.3,
+    "schroeder_hz": 108.4,
+    "source_receiver_distance_m": 2.404,
+    "speed_of_sound": 343.21,
+    "first_reflection_ms": 3.1,
+    "image_sources": 151,
+    "ism_max_order": 6,
+    "diffuse_rain_tau_ms": 3.7,
+    "late_noise": "gaussian",
+    "late_bands": 31,
+    "modal_crossover_hz": 108.4,
+    "modes": 176,
+    "drr_components_db": -2.51,
+    "normalize_gain_db": 7.44,
+    "direct_index": 34,
+    "t60_calibration_factors": {
+      "63.0": 1.304,
+      "125.0": 1.037,
+      "250.0": 1.235,
+      "500.0": 0.969,
+      "1000.0": 0.966,
+      "2000.0": 0.972,
+      "4000.0": 1.019,
+      "8000.0": 1.036,
+      "16000.0": 0.957
+    },
+    "t60_calibration_max_error_pct": [
+      28.2,
+      7.6,
+      4.9
+    ],
+    "render_seconds": 0.52
+  },
+  "resolved_preset": {
+    "name": "small_studio_room",
+    "seed": 3,
+    "output": {
+      "sample_rate": 48000,
+      "length_s": "auto",
+      "trim_db": 90.0,
+      "max_length_s": 30.0,
+      "lead_ms": 0.7,
+      "align_to_direct": true,
+      "fade_out_ms": 30.0,
+      "dc_highpass_hz": 8.0,
+      "normalize": "peak",
+      "peak_dbfs": -1.0,
+      "format": "PCM_24",
+      "dither": true,
+      "write_report": true
+    },
+    "room": {
+      "dimensions": [
+        5.2,
+        4.1,
+        2.8
+      ],
+      "materials": {
+        "default": "gypsum_board",
+        "floor": "wood_floor",
+        "ceiling": "acoustic_tile",
+        "north": "foam_50mm",
+        "west": "bass_trap"
+      },
+      "scattering": 0.25,
+      "source": {
+        "position": [
+          1.2,
+          2.05,
+          1.3
+        ],
+        "directivity": "subcardioid",
+        "orientation": [
+          0,
+          0
+        ]
+      },
+      "receiver": {
+        "position": [
+          3.6,
+          2.15,
+          1.2
+        ],
+        "directivity": "omni",
+        "orientation": [
+          180,
+          0
+        ]
+      },
+      "air": {
+        "temperature_c": 20.0,
+        "humidity_pct": 50.0,
+        "pressure_kpa": 101.325
+      },
+      "reverb_formula": "eyring",
+      "max_order": "auto",
+      "image_jitter_m": 0.04,
+      "modal": {
+        "enabled": "auto",
+        "crossover_hz": "auto",
+        "detune_cents": 0.0,
+        "gain_db": 0.0
+      }
+    },
+    "direct": {
+      "enabled": true,
+      "gain_db": 0.0,
+      "tone": null
+    },
+    "early": {
+      "source": "room",
+      "gain_db": 0.0,
+      "tone": null,
+      "crossover_ms": "auto",
+      "crossover_width_ms": "auto",
+      "parametric": {
+        "count": 24,
+        "start_ms": 6.0,
+        "end_ms": 70.0,
+        "distribution": "power",
+        "density_exponent": 2.0,
+        "level_start_db": -5.0,
+        "level_end_db": -22.0,
+        "level_curve": 1.0,
+        "level_jitter_db": 2.0,
+        "polarity": "random",
+        "color_from_decay": true,
+        "hf_damping_db_per_oct": 0.0,
+        "absorption": null,
+        "bounces_end": 3.0,
+        "cluster_size": 1,
+        "cluster_spread_ms": 1.5,
+        "air": true
+      },
+      "list": []
+    },
+    "late": {
+      "source": "room",
+      "t60": null,
+      "t60_scale": 1.0,
+      "calibrate": 3,
+      "gain_db": 0.0,
+      "tone": null,
+      "drr_db": null,
+      "onset_ms": "auto",
+      "attack_ms": 15.0,
+      "attack_shape": 1.0,
+      "noise": "auto",
+      "density": {
+        "initial_per_s": 300.0,
+        "max_per_s": "auto",
+        "full_ms": "auto",
+        "exponent": 2.0,
+        "pulse_amplitude": "gaussian"
+      },
+      "double_slope": {
+        "enabled": false,
+        "t60": null,
+        "t60_ratio": 2.5,
+        "level_db": -18.0
+      },
+      "bands_per_octave": 3,
+      "envelope_flatten": true,
+      "flatten_cycles": 8.0
+    },
+    "multichannel": {
+      "channels": 1,
+      "coherence": {
+        "model": "independent"
+      },
+      "array": {
+        "type": "none"
+      },
+      "early": "jitter",
+      "direct": "auto",
+      "receiver_jitter_m": 0.15,
+      "time_jitter_ms": 0.4,
+      "gain_jitter_db": 1.0,
+      "export": "interleaved"
+    },
+    "eq": [],
+    "eq_late": []
+  },
+  "analysis": {
+    "onset_s": 0.0007083333333333334,
+    "bands": {
+      "63": {
+        "EDT": 0.48058052909489296,
+        "T20": 0.27807429454365185,
+        "T30": 0.274416060100041,
+        "C50": 2.7068117648441747,
+        "C80": 8.054382139825574,
+        "D50": 0.6509610847853533,
+        "Ts_ms": 47.054238403696594
+      },
+      "125": {
+        "EDT": 0.41761019643894065,
+        "T20": 0.3152313095332562,
+        "T30": 0.2428757195881269,
+        "C50": 3.9996046565557632,
+        "C80": 10.406042438731205,
+        "D50": 0.7152342107040961,
+        "Ts_ms": 38.93108676669048
+      },
+      "250": {
+        "EDT": 0.3062184329568588,
+        "T20": 0.26847423541707693,
+        "T30": 0.22851579667792624,
+        "C50": 10.235496883805142,
+        "C80": 17.401676756106674,
+        "D50": 0.9134740227441857,
+        "Ts_ms": 25.057927209844795
+      },
+      "500": {
+        "EDT": 0.14989565534781857,
+        "T20": 0.21106892792656548,
+        "T30": 0.2141654470772444,
+        "C50": 15.95562465208651,
+        "C80": 27.348033347772155,
+        "D50": 0.9752512065525529,
+        "Ts_ms": 12.624145021771815
+      },
+      "1000": {
+        "EDT": 0.12976735580635046,
+        "T20": 0.1711411494170593,
+        "T30": 0.17427307530427405,
+        "C50": 20.598692210188574,
+        "C80": 29.999179251907506,
+        "D50": 0.9913629888534891,
+        "Ts_ms": 9.825177623595922
+      },
+      "2000": {
+        "EDT": 0.14845984974591137,
+        "T20": 0.1655537144144468,
+        "T30": 0.1671244478513723,
+        "C50": 20.21803374591223,
+        "C80": 30.932871055396546,
+        "D50": 0.9905792419886453,
+        "Ts_ms": 9.177504900485037
+      },
+      "4000": {
+        "EDT": 0.1494993728804366,
+        "T20": 0.18507212136600132,
+        "T30": 0.18701668738089214,
+        "C50": 18.495903358522163,
+        "C80": 28.02879310743181,
+        "D50": 0.9860584100325321,
+        "Ts_ms": 9.49523671477174
+      },
+      "8000": {
+        "EDT": 0.14408439835923176,
+        "T20": 0.1690522606272714,
+        "T30": 0.1719364071208326,
+        "C50": 19.602957117222378,
+        "C80": 30.104912574977256,
+        "D50": 0.9891614429551375,
+        "Ts_ms": 8.736074846713704
+      },
+      "16000": {
+        "EDT": 0.12998807482593852,
+        "T20": 0.12952841029801865,
+        "T30": 0.13604968731518294,
+        "C50": 24.390072763331702,
+        "C80": 36.98401823040501,
+        "D50": 0.9963741055638837,
+        "Ts_ms": 7.016041305928891
+      }
+    },
+    "broadband": {
+      "EDT": 0.14412766320504808,
+      "T20": 0.185165238913305,
+      "T30": 0.20893664114743965,
+      "C50": 19.496472129493654,
+      "C80": 27.52899935999423,
+      "D50": 0.9888953943269487,
+      "Ts_ms": 8.49201014974922
+    },
+    "DRR_dB": -2.1723562703722497,
+    "BR": 1.2135550134830848,
+    "Br": 0.911704464997507,
+    "ned_mixing_ms": 25.0
+  }
+}

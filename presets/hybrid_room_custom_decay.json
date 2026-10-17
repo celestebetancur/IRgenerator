@@ -1,0 +1,17 @@
+{
+  "name": "hybrid_room_custom_decay",
+  "_comment": "Geometry-based early reflections + tail with an overridden T60 curve and a double-slope decay.",
+  "seed": 8,
+  "room": {
+    "dimensions": [18.0, 12.0, 7.0],
+    "materials": {"default": "concrete_painted", "floor": "wood_floor", "ceiling": "plaster"},
+    "scattering": 0.35,
+    "source": {"position": [4.0, 6.0, 1.7]},
+    "receiver": {"position": [12.5, 5.0, 1.7]},
+    "modal": {"enabled": false}
+  },
+  "late": {
+    "t60": [3.0, 2.8, 2.6, 2.4, 2.2, 1.9, 1.5, 1.0, 0.6],
+    "double_slope": {"enabled": true, "t60_ratio": 1.8, "level_db": -14.0}
+  }
+}

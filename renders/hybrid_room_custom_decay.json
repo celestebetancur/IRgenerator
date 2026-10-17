@@ -1,0 +1,305 @@
+{
+  "info": {
+    "name": "hybrid_room_custom_decay",
+    "sample_rate": 48000,
+    "channels": 1,
+    "length_s": 6.890708333333333,
+    "t60_bands": {
+      "63.0": 3.0,
+      "125.0": 2.8,
+      "250.0": 2.6,
+      "500.0": 2.4,
+      "1000.0": 2.2,
+      "2000.0": 1.9,
+      "4000.0": 1.5,
+      "8000.0": 1.0,
+      "16000.0": 0.6
+    },
+    "room_volume_m3": 1512.0,
+    "room_surface_m2": 852.0,
+    "t60_room_bands": {
+      "63.0": 5.782,
+      "125.0": 5.722,
+      "250.0": 6.583,
+      "500.0": 5.617,
+      "1000.0": 5.863,
+      "2000.0": 5.494,
+      "4000.0": 3.388,
+      "8000.0": 1.341,
+      "16000.0": 0.443
+    },
+    "mixing_time_ms": 47.5,
+    "crossover_ms": 47.5,
+    "crossover_width_ms": 23.7,
+    "schroeder_hz": 124.5,
+    "source_receiver_distance_m": 8.559,
+    "speed_of_sound": 343.21,
+    "first_reflection_ms": 1.9,
+    "image_sources": 66,
+    "ism_max_order": 6,
+    "diffuse_rain_tau_ms": 10.3,
+    "late_noise": "gaussian",
+    "late_bands": 31,
+    "drr_components_db": -11.74,
+    "normalize_gain_db": 19.9,
+    "direct_index": 34,
+    "render_seconds": 1.64
+  },
+  "resolved_preset": {
+    "name": "hybrid_room_custom_decay",
+    "seed": 8,
+    "output": {
+      "sample_rate": 48000,
+      "length_s": "auto",
+      "trim_db": 90.0,
+      "max_length_s": 30.0,
+      "lead_ms": 0.7,
+      "align_to_direct": true,
+      "fade_out_ms": 30.0,
+      "dc_highpass_hz": 8.0,
+      "normalize": "peak",
+      "peak_dbfs": -1.0,
+      "format": "PCM_24",
+      "dither": true,
+      "write_report": true
+    },
+    "room": {
+      "dimensions": [
+        18.0,
+        12.0,
+        7.0
+      ],
+      "materials": {
+        "default": "concrete_painted",
+        "floor": "wood_floor",
+        "ceiling": "plaster"
+      },
+      "scattering": 0.35,
+      "source": {
+        "position": [
+          4.0,
+          6.0,
+          1.7
+        ],
+        "directivity": "omni",
+        "orientation": [
+          0,
+          0
+        ]
+      },
+      "receiver": {
+        "position": [
+          12.5,
+          5.0,
+          1.7
+        ],
+        "directivity": "omni",
+        "orientation": [
+          180,
+          0
+        ]
+      },
+      "air": {
+        "temperature_c": 20.0,
+        "humidity_pct": 50.0,
+        "pressure_kpa": 101.325
+      },
+      "reverb_formula": "eyring",
+      "max_order": "auto",
+      "image_jitter_m": 0.04,
+      "modal": {
+        "enabled": false,
+        "crossover_hz": "auto",
+        "detune_cents": 0.0,
+        "gain_db": 0.0
+      }
+    },
+    "direct": {
+      "enabled": true,
+      "gain_db": 0.0,
+      "tone": null
+    },
+    "early": {
+      "source": "room",
+      "gain_db": 0.0,
+      "tone": null,
+      "crossover_ms": "auto",
+      "crossover_width_ms": "auto",
+      "parametric": {
+        "count": 24,
+        "start_ms": 6.0,
+        "end_ms": 70.0,
+        "distribution": "power",
+        "density_exponent": 2.0,
+        "level_start_db": -5.0,
+        "level_end_db": -22.0,
+        "level_curve": 1.0,
+        "level_jitter_db": 2.0,
+        "polarity": "random",
+        "color_from_decay": true,
+        "hf_damping_db_per_oct": 0.0,
+        "absorption": null,
+        "bounces_end": 3.0,
+        "cluster_size": 1,
+        "cluster_spread_ms": 1.5,
+        "air": true
+      },
+      "list": []
+    },
+    "late": {
+      "source": "room",
+      "t60": [
+        3.0,
+        2.8,
+        2.6,
+        2.4,
+        2.2,
+        1.9,
+        1.5,
+        1.0,
+        0.6
+      ],
+      "t60_scale": 1.0,
+      "calibrate": 3,
+      "gain_db": 0.0,
+      "tone": null,
+      "drr_db": null,
+      "onset_ms": "auto",
+      "attack_ms": 15.0,
+      "attack_shape": 1.0,
+      "noise": "auto",
+      "density": {
+        "initial_per_s": 300.0,
+        "max_per_s": "auto",
+        "full_ms": "auto",
+        "exponent": 2.0,
+        "pulse_amplitude": "gaussian"
+      },
+      "double_slope": {
+        "enabled": true,
+        "t60": null,
+        "t60_ratio": 1.8,
+        "level_db": -14.0
+      },
+      "bands_per_octave": 3,
+      "envelope_flatten": true,
+      "flatten_cycles": 8.0
+    },
+    "multichannel": {
+      "channels": 1,
+      "coherence": {
+        "model": "independent"
+      },
+      "array": {
+        "type": "none"
+      },
+      "early": "jitter",
+      "direct": "auto",
+      "receiver_jitter_m": 0.15,
+      "time_jitter_ms": 0.4,
+      "gain_jitter_db": 1.0,
+      "export": "interleaved"
+    },
+    "eq": [],
+    "eq_late": []
+  },
+  "analysis": {
+    "onset_s": 0.0007083333333333334,
+    "bands": {
+      "63": {
+        "EDT": 3.5091598731352858,
+        "T20": 3.4217778100340897,
+        "T30": 3.8680064156052443,
+        "C50": -7.389564661369965,
+        "C80": -5.01750024712231,
+        "D50": 0.15426813459152125,
+        "Ts_ms": 266.6855815501639
+      },
+      "125": {
+        "EDT": 2.837854825845271,
+        "T20": 3.2538704819011186,
+        "T30": 3.5741260040045115,
+        "C50": -7.393504676229653,
+        "C80": -2.1989042115131703,
+        "D50": 0.15414980694043534,
+        "Ts_ms": 207.16981571916517
+      },
+      "250": {
+        "EDT": 2.6553730997829357,
+        "T20": 2.9868450331677097,
+        "T30": 3.273689088318373,
+        "C50": -4.502977852665457,
+        "C80": -1.253009694665486,
+        "D50": 0.26175844514314545,
+        "Ts_ms": 189.2006105183591
+      },
+      "500": {
+        "EDT": 2.499382394888243,
+        "T20": 2.7701293579063706,
+        "T30": 3.0360291431381827,
+        "C50": -5.469514116914711,
+        "C80": -2.326544453457737,
+        "D50": 0.2210768229825178,
+        "Ts_ms": 182.19714810396547
+      },
+      "1000": {
+        "EDT": 2.2569738604485625,
+        "T20": 2.5378204292546855,
+        "T30": 2.7717219567142704,
+        "C50": -4.923197014680245,
+        "C80": -2.1946500852381674,
+        "D50": 0.24349587102879897,
+        "Ts_ms": 168.4304400591886
+      },
+      "2000": {
+        "EDT": 1.972310183901086,
+        "T20": 2.182831165470005,
+        "T30": 2.41695242606176,
+        "C50": -3.624059994114253,
+        "C80": -1.1200516049306504,
+        "D50": 0.30270060500711315,
+        "Ts_ms": 142.90069237747846
+      },
+      "4000": {
+        "EDT": 1.5025009369005546,
+        "T20": 1.7467196530332896,
+        "T30": 1.9348221754956587,
+        "C50": -2.279730236908178,
+        "C80": 0.4185456002502358,
+        "D50": 0.3717007931342966,
+        "Ts_ms": 110.36966889094569
+      },
+      "8000": {
+        "EDT": 1.0635559256315887,
+        "T20": 1.234671763020816,
+        "T30": 1.378222292447488,
+        "C50": -0.6371632433464202,
+        "C80": 2.6375361413525464,
+        "D50": 0.4633875837603892,
+        "Ts_ms": 79.64878583774222
+      },
+      "16000": {
+        "EDT": 0.79023780275126,
+        "T20": 0.8314944690427986,
+        "T30": 0.9343512918021913,
+        "C50": 0.3653685782544136,
+        "C80": 4.329906444471833,
+        "D50": 0.5210199097415407,
+        "Ts_ms": 60.67310682808898
+      }
+    },
+    "broadband": {
+      "EDT": 1.5243606333141726,
+      "T20": 2.226727500803087,
+      "T30": 2.567141874692395,
+      "C50": -1.903104848232762,
+      "C80": 1.1147581269319313,
+      "D50": 0.39216850611004234,
+      "Ts_ms": 109.34766817508276
+    },
+    "DRR_dB": -9.833859976147487,
+    "BR": 1.1790820533780888,
+    "Br": 0.7493045977242339,
+    "ned_mixing_ms": 42.0
+  }
+}

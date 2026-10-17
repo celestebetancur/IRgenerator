@@ -1,0 +1,12 @@
+{
+  "name": "plate_style",
+  "_comment": "Plate-like: no discrete early reflections, instant high density, bright, flat-ish decay.",
+  "mode": "perceptual",
+  "seed": 2,
+  "early": {"source": "none"},
+  "late": {
+    "t60": {"freqs": [63, 250, 1000, 4000, 10000, 16000], "values": [1.4, 2.0, 2.4, 2.2, 1.6, 1.1]},
+    "onset_ms": 1.5, "attack_ms": 4.0, "noise": "gaussian", "drr_db": -4.0,
+    "tone": {"freqs": [80, 300, 3000, 12000], "values": [-6, 0, 1.5, 0]}
+  }
+}

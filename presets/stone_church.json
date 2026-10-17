@@ -1,0 +1,43 @@
+{
+  "name": "stone_church",
+  "_comment": "Large reverberant stone space, long low-scattering decay.",
+  "seed": 5,
+  "room": {
+    "dimensions": [
+      55.0,
+      18.0,
+      22.0
+    ],
+    "materials": {
+      "default": "brick",
+      "floor": "marble",
+      "ceiling": "wood_thick",
+      "north": "glass_window",
+      "south": "seats_wood_empty"
+    },
+    "scattering": 0.15,
+    "source": {
+      "position": [
+        8.0,
+        9.0,
+        2.0
+      ]
+    },
+    "receiver": {
+      "position": [
+        38.0,
+        7.0,
+        1.6
+      ],
+      "directivity": "cardioid",
+      "orientation": [
+        180,
+        0
+      ]
+    },
+    "air": {
+      "temperature_c": 14.0,
+      "humidity_pct": 60.0
+    }
+  }
+}
