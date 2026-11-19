@@ -1,0 +1,13 @@
+{
+  "name": "wine_bottle",
+  "_about": "Glass bottle: Helmholtz neck resonance plus the body modes.",
+  "space": {
+    "shape": "bottle",
+    "radius_m": 0.037,
+    "length_m": 0.2,
+    "neck_radius_m": 0.0095,
+    "neck_length_m": 0.08,
+    "wall": "glass",
+    "decay_scale": 3
+  }
+}

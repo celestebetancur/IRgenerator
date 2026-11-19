@@ -40,7 +40,7 @@ python -m irgen analyze my_measured_ir.wav --plot my_ir.png             # analys
 python -m irgen materials                                              # absorption database
 ```
 
-Each render writes three files:
+Each render writes three files (the CLI writes the report unless you pass `--no-analysis`; the GUI renders the IR only and runs the analysis when you press **Analyze**):
 
 - `name.wav`: the IR.
 - `name.json`: the fully resolved preset, derived room data, and the measured metrics.
@@ -90,6 +90,76 @@ Things to know:
 - **The direct sound and early reflections dominate full-IR correlation.** With `early: "same"`, the full IRs stay correlated (~0.5) even when the tails are independent. Use `jitter` or `independent`, or a real array with `direct: per_channel`, for lower values.
 - **Low frequencies vary more between channels, and that is inherent.** Below ~150 Hz an 80 ms window holds only a few cycles, so C80 and EDT differ more per channel. `coherent_blend` for the bass reduces this and is also what real rooms do.
 - **Cost grows with channel count.** 64 channels × 4 s at 48 kHz takes roughly 0.5–1.5 min and a few hundred MB of RAM.
+
+## Strange spaces: artificial, bizarre and tonal IRs
+
+A second layer, separate from the room engine (`irgen/strange.py`). In the GUI, press **✦ Strange spaces** in the header. It opens as an overlay, so the standard view and its settings stay as they were; **← Standard** goes back.
+
+```bash
+python -m irgen strange presets/strange/inside_a_basketball.json
+python -m irgen strange presets/strange/inside_a_basketball.json --set space.scale=300 --set tuning.mode=snap
+python -m irgen strange presets/strange/gigantified_last_render.json --import-ir renders/stone_church.wav
+```
+
+The layers below can be combined freely:
+
+| block | what it does |
+|---|---|
+| `space` | Analytic cavity modes for a `box`, `sphere` (zeros of j<sub>l</sub>′), `cylinder` / `pipe` (zeros of J<sub>m</sub>′ × axial modes; `ends` = closed / open / half), or `bottle` (cylinder + Helmholtz neck). `scale` multiplies every length: modes drop by the factor, and T60 follows from Eyring with the scaled V/S. `medium` sets c, density and absorption: gases (air, helium, SF6, CO2, xenon, Mars and Titan atmospheres; ISO absorption), liquids (water, seawater, oil, glycerol, honey, liquid nitrogen, superfluid helium, mercury), molten (lava, glass, iron, aluminium, gold), soft solids (jelly, flesh, silicone), aerogel and steel. Each uses viscous absorption plus a power law. `bubbly_water` uses Wood's equation (`void_fraction`; 1 % air gives about 120 m/s) and a Minnaert absorption peak (`bubble_radius_mm`). The wall-to-medium impedance ratio picks the boundary: `boundary` auto, rigid, or soft (pressure-release, a different exact mode set). It also sets how much energy leaves through the wall (`transmission` 0..1; `wall_thickness_mm` gives a thin mass-law shell). `medium_absorption_scale` exaggerates the medium's loss. `wall` takes a strange material (rubber, glass, ice, brass, chitin, skin, felt, `mirror`…) or any room material. `t60_floor_s` freezes the decay. |
+| `modes` | `max_modes` sets how many modes are synthesised; above them a velvet diffuse tail takes over, level-matched to the modal density. `detune_cents` adds shimmer. |
+| `tuning` | `snap` pulls every mode toward the nearest pitch of `scale` (`amount` 0..1). `replace` rings only the scale (`partials`, `inharmonicity`, `ring_s`). `add` layers both. 30 scales, including the modes, pentatonics, maqamat, pelog / slendro, just intonation, the harmonic series, Bohlen-Pierce, 19-TET and quarter tones, plus `custom` cents with any period. |
+| `imprint` | Resonant peaks (`gain_db`, `q`) at the scale pitches, applied to everything reverberant. |
+| `echoes` | A recirculating flutter: `auto` (across the shape), `note` (root period, a pitched comb) or `ms`. Loss per pass follows the T60, and `dispersion` gives spring-like chirps. |
+| `shell` | Plate modes of the wall itself (thickness, bending-wave speed, loss factor). |
+| `motion` | `glide_oct_per_s` (the space expands > 0 or shrinks < 0 while ringing) and `wobble_cents` / `wobble_hz` (each mode breathes). |
+| `envelope` | `bloom_ms`, `gate_ms`, `reverse`. |
+| `imported` | The last standard GUI render, a file, or `--import-ir`, played slower by `scale` (gigantified), then mixed and imprinted. |
+
+The GUI adds a live size and lowest-mode estimate, a resonance map (every mode with the scale pitches and the mode-to-diffuse crossover), 🎲 **Mutate**, and the same audition and report as the standard view. Presets live in `presets/strange/`, and GUI renders go to `renders/gui/strange/<name>/`.
+
+## IR-set API (for plugins and hosts)
+
+The API renders a **set of N decorrelated IRs** (1–64) from any preset, standard or strange, for a host that loads them and hot-swaps the acoustic image, such as a convolution or auralization plugin. All of it lives in `irgen/service.py`.
+
+```bash
+python -m irgen serve                      # headless: http://127.0.0.1:8766/v1
+python -m irgen gui                        # the same API is also mounted at http://127.0.0.1:8765/v1
+python -m irgen set strange/dorian_cistern -n 8 --set tuning.root=E2     # offline, prints the manifest
+```
+
+| endpoint | |
+|---|---|
+| `GET /v1` | api version, irgen version, endpoints |
+| `GET /v1/presets` | `[{id: "strange/inside_a_basketball", engine, name, about, channels, sample_rate}]` |
+| `GET /v1/presets/<engine>/<name>` | preset JSON |
+| `POST /v1/sets` | render request → `202 {job}`. Add `"wait": true` to get the manifest directly. |
+| `GET /v1/jobs/<id>` | `status` (queued / rendering / done / error / cancelled), `stage`, `preview_manifest`, `manifest` |
+| `DELETE /v1/jobs/<id>` | cancel a queued job |
+| `GET /v1/sets`, `GET /v1/sets/<id>`, `DELETE /v1/sets/<id>` | cached sets |
+| `GET /v1/sets/<id>/ch01.wav` | one file of the set (the manifest also gives absolute paths) |
+
+A request looks like this:
+
+```json
+{"preset": "strange/basketball_cathedral", "channels": 16,
+ "overrides": {"space.scale": 120, "tuning.mode": "snap", "tuning.scale": "dorian"},
+ "sample_rate": 48000, "seed": 7, "normalize": "energy", "layout": "separate",
+ "format": "FLOAT", "preview": true}
+```
+
+- `preset` takes an id or an inline preset object (then add `"engine"`). `overrides` uses the same dotted keys as `--set`.
+- `normalize`: `energy` (the default) gives every set the same mean channel energy, so swaps don't jump in level. `peak` and `none` are also available.
+- `layout`: `separate` (one mono WAV per channel, the default), `interleaved` or `both`.
+- `preview: true` renders a fast variant first (strange: at most 150 modes; standard: no T30 calibration), with the same length and alignment, then the full set.
+- `import_ir` is a WAV path for strange presets with the imported layer. Inside the GUI, the last standard render is used and fingerprinted.
+
+**Manifest** (`renders/sets/<set_id>/manifest.json`): `set_id`, `stage`, `engine`, `preset`, `sample_rate`, `channels`, `length_samples`, `format`, `normalize`, `gain_db`, `direct_index` (the sample of the direct sound, the same in every channel and every set with the same `lead_ms`), `files[{channel, path, url}]`, `interleaved`, `t60_bands`, `render_seconds` and the resolved preset (`preset.json`).
+
+**Guarantees for hot-swapping:**
+- Sets are content-addressed. The same request and irgen version give the same `set_id`, rendered once and then served from the cache.
+- A set appears atomically: it is written to a temporary folder and renamed into place, so the host never reads a half-written set.
+- Identical requests in flight share one job.
+- Everything binds to 127.0.0.1 only.
 
 ## Quality notes
 

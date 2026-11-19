@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>irgen — Strange Spaces</title>
+<style>
+:root{
+  --bg:#141218; --panel:#1d1a23; --panel2:#262230; --line:#363042; --text:#ebe7f2; --muted:#9a93a8;
+  --accent:#b98cff; --accent2:#ff7ad9; --mint:#7ee0b5; --warn:#ffb35f; --bad:#ff6b6b;
+  --r:8px; --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:13px/1.4 var(--font)}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:15px;margin:0;font-weight:650;letter-spacing:.2px}
+header h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+header .sp{flex:1}
+select,input,button,textarea{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:6px}
+input[type=number],input[type=text],select{padding:4px 6px;min-width:0}
+input[type=number]{width:78px}
+button{padding:6px 12px;cursor:pointer;white-space:nowrap}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:#170c26;border-color:var(--accent);font-weight:650}
+button.primary:disabled{opacity:.5;cursor:wait}
+button.ghost{background:none}
+.wrap{display:grid;grid-template-columns:minmax(340px,440px) 1fr;height:calc(100% - 52px)}
+@media (max-width:1000px){.wrap{grid-template-columns:1fr;height:auto} aside{border-right:none;border-bottom:1px solid var(--line)} html,body{height:auto}}
+aside{overflow:auto;border-right:1px solid var(--line);padding:10px 12px 40px}
+main{overflow:auto;padding:14px 18px 40px}
+details{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);margin:0 0 10px}
+summary{padding:9px 12px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:8px}
+summary::before{content:"▸";color:var(--muted);transition:transform .15s}
+details[open]>summary::before{transform:rotate(90deg)}
+summary .tag{margin-left:auto;font-weight:500;font-size:11px;color:var(--muted)}
+.sec{padding:4px 12px 12px}
+.row{display:grid;grid-template-columns:140px 1fr;align-items:center;gap:8px;margin:5px 0}
+.row label{color:var(--muted)}
+.row .ctl{display:flex;align-items:center;gap:6px;min-width:0}
+.ctl input[type=range]{flex:1;min-width:50px;accent-color:var(--accent)}
+.xyz{display:flex;gap:4px}.xyz input{width:64px}
+.hint{color:var(--muted);font-size:11.5px;margin:4px 0 6px}
+.sub{border-top:1px dashed var(--line);margin-top:8px;padding-top:6px}
+.sub h4{margin:4px 0;font-size:12px;color:var(--accent2);font-weight:600}
+.eqrow{display:grid;grid-template-columns:100px 70px 60px 50px 22px;gap:4px;margin:3px 0}
+.eqrow input,.eqrow select{width:100%}
+textarea{width:100%;min-height:260px;font:12px/1.35 ui-monospace,Menlo,monospace;padding:8px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:10px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px}
+.card .k{color:var(--muted);font-size:11px}.card .v{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:12px 0 10px}
+.tabs button{border:none;border-bottom:2px solid transparent;border-radius:0;background:none;color:var(--muted);padding:8px 12px}
+.tabs button.on{color:var(--text);border-bottom-color:var(--accent)}
+.pane{display:none}.pane.on{display:block}
+.pane img{max-width:100%;border-radius:var(--r);background:#fff}
+pre{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:10px;overflow:auto;font-size:12px}
+#status{color:var(--muted)} #status.err{color:var(--bad)}
+.audio{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0}
+audio{height:34px;max-width:100%}
+.toggle{display:flex;flex-wrap:wrap;gap:2px;background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:2px}
+.toggle button{border:none;background:none;padding:4px 9px;color:var(--muted)}
+.toggle button.on{background:var(--accent);color:#170c26;border-radius:5px}
+canvas{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);display:block}
+#envc{height:110px} #mapc{height:210px;margin-top:8px}
+.maphead{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:10px 0 0;font-size:11.5px;color:var(--muted)}
+.maphead b{color:var(--text);font-weight:600;font-size:12.5px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.readout{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:7px 9px;margin:6px 0;font-size:12px}
+.readout b{color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chips button{padding:2px 8px;font-size:11.5px;border-radius:99px}
+.about{border-left:3px solid var(--accent2);padding:6px 10px;margin:8px 0;color:var(--text);background:var(--panel)}
+.strip{width:100%;height:34px;display:block;margin:4px 0}
+.tip{position:fixed;pointer-events:none;background:#000c;border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:11.5px;display:none;z-index:9}
+.hide{display:none!important}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid var(--muted);border-top-color:var(--accent);border-radius:50%;animation:s 0.8s linear infinite;vertical-align:-2px}
+@keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <button id="backBtn" class="ghost" title="back to the standard IR generator">← Standard</button>
+  <h1>irgen <span>✦ strange spaces</span></h1>
+  <select id="presetSel" title="load preset"></select>
+  <input id="nameIn" type="text" placeholder="name" style="width:170px">
+  <button id="saveBtn">Save preset</button>
+  <button id="mutateBtn" title="randomise the space: shape, size, medium, material, tuning, motion">🎲 Mutate</button>
+  <span class="sp"></span>
+  <span id="status">ready</span>
+  <button class="primary" id="renderBtn">Render ▸</button>
+</header>
+<div class="wrap">
+<aside id="side"></aside>
+<main>
+  <div id="aboutBox" class="about hide"></div>
+  <canvas id="envc"></canvas>
+  <div class="maphead"><b>Resonance map</b>
+    <span><span class="dot" style="background:#b98cff"></span>cavity modes</span>
+    <span><span class="dot" style="background:#ff7ad9"></span>tonal modes</span>
+    <span><span class="dot" style="background:#7ee0b5"></span>shell modes</span>
+    <span><span class="dot" style="background:#ffb35f"></span>Helmholtz</span>
+    <span><span class="dot" style="background:#5a4d70"></span>scale pitches</span>
+    <span>height = energy (amplitude² × T60)</span></div>
+  <canvas id="mapc"></canvas>
+  <div class="cards" id="cards"></div>
+  <div class="audio">
+    <span class="hint" style="margin:0">IR preview</span><audio id="prevAudio" controls></audio>
+    <span id="dlinfo" class="hint" style="margin:0"></span>
+  </div>
+  <div class="card" style="margin:8px 0">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+      <b>Audition</b>
+      <select id="drySel"><option value="plucks">plucks</option><option value="drums">drums</option><option value="voice">voice-like</option><option value="clicks">clicks</option><option value="file">your file…</option></select>
+      <input type="file" id="dryFile" accept="audio/*" class="hide">
+      <label class="hint" style="margin:0">wet</label><input type="range" id="wetIn" min="0" max="1" step="0.01" value="0.6" style="width:110px">
+      <button id="audBtn">Convolve ▸</button>
+      <audio id="audAudio" controls></audio>
+    </div>
+  </div>
+  <div class="tabs" id="tabs">
+    <button data-t="rep" class="on">Report</button><button data-t="met">Metrics</button><button data-t="json">Preset JSON</button><button data-t="help">How it works</button>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;margin:0 0 8px"><button id="anaBtn" title="ISO 3382 analysis and report of the last render (only computed on request)">Analyze ▸</button><span class="hint" style="margin:0">analysis runs on request (renders stay fast)</span></div>
+  <div class="pane on" id="p-rep"><img id="repImg" alt=""><div class="hint" id="repHint">Render, then press Analyze for the report.</div></div>
+  <div class="pane" id="p-met"><pre id="metPre">—</pre><pre id="infoPre"></pre></div>
+  <div class="pane" id="p-json">
+    <div class="hint">Full strange-space preset. Edit anything and press Apply.</div>
+    <textarea id="jsonTa" spellcheck="false"></textarea>
+    <div style="margin-top:6px;display:flex;gap:8px"><button id="applyJson">Apply JSON</button><button id="resetDefaults">Reset to defaults</button></div>
+  </div>
+  <div class="pane" id="p-help"><div class="card" style="line-height:1.55">
+    <p><b>Space.</b> Cavity modes are solved analytically for the shape: a box (cosine modes), a sphere (zeros of the spherical Bessel derivative j<sub>l</sub>′, with 2l+1 degenerate modes summed), a cylinder or pipe (zeros of J<sub>m</sub>′ × axial modes for closed, open or half-open ends), or a bottle (a cylinder plus a Helmholtz neck). Source and mic coupling come from the mode shapes. The T60 per octave comes from the wall material, the medium's absorption and V/S (Eyring).</p>
+    <p><b>Scale ×</b> multiplies every length. Mode frequencies divide by the factor and decay times grow with it, so a basketball × 300 rings like a dome. The medium sets the speed of sound: helium raises every mode, SF6 lowers them, and water or steel make the cavity mostly ultrasonic.</p>
+    <p><b>Medium and boundary.</b> Each medium has a speed of sound, a density and its own absorption law: ISO air absorption for gases; for liquids, molten metals, lava, jelly and flesh, viscous absorption from the shear viscosity plus a power law in frequency. Bubbly water uses Wood's equation (1 % air gives about 120 m/s) and an absorption peak at the bubbles' Minnaert resonance. The wall-to-medium impedance ratio decides the boundary: a wall softer than the medium (rubber in water, glass around mercury) is <i>pressure-release</i>, a different exact mode set (zeros of j<sub>l</sub> and J<sub>m</sub>, sine modes in a box). A wall that matches the medium lets the sound leave (stone around lava is almost anechoic). <i>Transmission</i> sets how much of that loss applies; <i>wall thickness</i> turns the wall into a thin, mass-law shell.</p>
+    <p><b>Diffuse tail.</b> Above the highest synthesised mode (set by <i>max modes</i>), a velvet-noise tail takes over. It is level-matched to the modal density of the top modal octave.</p>
+    <p><b>Tuning.</b> <i>snap</i> pulls every mode (cavity and shell) toward the nearest scale pitch. Snapped modes pile up on the same pitches, and a little detune makes them shimmer. <i>replace</i> discards the physical modes and rings only the scale (with partials). <i>add</i> layers both. The <b>tonal imprint</b> adds resonant peaks at the scale pitches to everything reverberant, including the diffuse tail, echoes and an imported IR.</p>
+    <p><b>Echoes</b> are a recirculating flutter: auto = across the shape (a sphere's diameter or a pipe's length), <i>note</i> = one period of the root (a pitched comb). Dispersion delays the highs (+) or lows (−) on every pass, which gives spring-like chirps.</p>
+    <p><b>Motion</b> makes the whole space glide (it expands or shrinks while ringing: + falls, − rises) and breathe (each mode wobbles with its own phase).</p>
+    <p><b>Imported IR</b> takes the last IR from the standard view, or any file, and plays it slower by its scale factor. That gigantifies a real room the same way.</p>
+  </div></div>
+</main>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+"use strict";
+let META = null, S = null, LAST = null, IMPORT_B64 = null, IMPORT_NAME = "";
+const $ = s => document.querySelector(s);
+const clone = o => JSON.parse(JSON.stringify(o));
+const getP = (o, p) => p.split(".").reduce((a, k) => (a == null ? undefined : a[k]), o);
+function setP(o, p, v){ const ks = p.split("."); let a = o; ks.slice(0,-1).forEach(k => { if (a[k] == null || typeof a[k] !== "object") a[k] = {}; a = a[k]; }); a[ks.at(-1)] = v; }
+function merge(b, o){ const r = clone(b); for (const k in (o||{})) { const v = o[k]; if (v && typeof v === "object" && !Array.isArray(v) && r[k] && typeof r[k] === "object" && !Array.isArray(r[k])) r[k] = merge(r[k], v); else r[k] = clone(v); } return r; }
+const KIND_COL = ["#b98cff","#ff7ad9","#7ee0b5","#ffb35f"], KIND_NAME = ["cavity","tonal","shell","Helmholtz"];
+const NOTES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+
+/* ------------------------------------------------------------------ UI builders */
+const binders = [];
+function el(tag, attrs={}, ...kids){ const e = document.createElement(tag); for (const [k,v] of Object.entries(attrs)) { if (k === "class") e.className = v; else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v); } kids.flat().forEach(c => e.append(c instanceof Node ? c : document.createTextNode(c))); return e; }
+function row(label, ...ctl){ return el("div",{class:"row"}, el("label",{}, label), el("div",{class:"ctl"}, ...ctl)); }
+function changed(){ syncJson(); updateVisibility(); updateReadout(); }
+function num(path, {min=0,max=1,step=0.01,log=false,unit="",auto=false,int=false}={}){
+  const rng = el("input",{type:"range",min:log?Math.log10(min):min,max:log?Math.log10(max):max,step:log?0.001:step});
+  const box = el("input",{type:"number",step:step,min:min,max:max});
+  let ab = null;
+  const toR = v => log ? Math.log10(Math.max(v,min)) : v;
+  const fromR = r => { let v = log ? Math.pow(10,+r) : +r; v = int ? Math.round(v) : +(+v).toPrecision(4); return v; };
+  rng.addEventListener("input", () => { const v = fromR(rng.value); box.value = v; setP(S,path,v); changed(); });
+  box.addEventListener("change", () => { const v = int ? parseInt(box.value) : parseFloat(box.value); if (!isNaN(v)) { rng.value = toR(v); setP(S,path,v); changed(); } });
+  const parts = [rng, box];
+  if (unit) parts.push(el("span",{class:"hint",style:"margin:0"},unit));
+  if (auto){ ab = el("input",{type:"checkbox",title:"auto"}); ab.addEventListener("change",()=>{ setP(S,path, ab.checked ? "auto" : (parseFloat(box.value)||min)); refreshAll(); changed(); }); parts.push(el("label",{class:"hint",style:"margin:0;display:flex;gap:3px;align-items:center"},ab,"auto")); }
+  binders.push(() => { const v = getP(S,path); const isA = (v === "auto" || v == null); if (ab) ab.checked = isA; rng.disabled = box.disabled = !!(ab && isA); if (typeof v === "number") { rng.value = toR(v); box.value = v; } });
+  return parts;
+}
+function sel(path, options, {onchange}={}){
+  const s = el("select",{});
+  options.forEach(o => {
+    if (o && o.group){ const g = el("optgroup",{label:o.group}); o.items.forEach(x => g.append(el("option",{value:JSON.stringify(x)}, String(x)))); s.append(g); return; }
+    const [v,l] = Array.isArray(o) ? o : [o,o]; s.append(el("option",{value:JSON.stringify(v)}, String(l)));
+  });
+  s.addEventListener("change", () => { setP(S,path,JSON.parse(s.value)); onchange && onchange(); refreshAll(); changed(); });
+  binders.push(() => { const v = JSON.stringify(getP(S,path)); if ([...s.options].some(o => o.value === v)) s.value = v; });
+  return s;
+}
+function chk(path, label=""){
+  const c = el("input",{type:"checkbox"});
+  c.addEventListener("change", () => { setP(S,path,c.checked); refreshAll(); changed(); });
+  binders.push(() => { c.checked = !!getP(S,path); });
+  return label ? el("label",{style:"display:flex;gap:5px;align-items:center"}, c, label) : c;
+}
+function seg(path, options){
+  const t = el("div",{class:"toggle"});
+  options.forEach(o => { const [v,l] = Array.isArray(o) ? o : [o,o]; t.append(el("button",{"data-v":v, onclick:() => { setP(S,path,v); refreshAll(); changed(); }}, l)); });
+  binders.push(() => { const v = getP(S,path); t.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === String(v))); });
+  return t;
+}
+function xyz(path){
+  const ins = [0,1,2].map(i => { const e = el("input",{type:"number",step:"0.01"}); e.addEventListener("change", () => { const a = clone(getP(S,path) || [0,0,0]); a[i] = parseFloat(e.value)||0; setP(S,path,a); changed(); }); return e; });
+  binders.push(() => { const a = getP(S,path) || [0,0,0]; ins.forEach((e,i) => e.value = a[i]); });
+  return el("div",{class:"xyz"}, ...ins);
+}
+/* three compact 0..1 sliders (relative position) */
+function rel3(path){
+  const ins = [0,1,2].map(i => { const e = el("input",{type:"range",min:0.02,max:0.98,step:0.01,title:"xyz"[i]}); e.addEventListener("input", () => { const a = clone(getP(S,path)); a[i] = +e.value; setP(S,path,a); changed(); }); return e; });
+  binders.push(() => { const a = getP(S,path) || [0.5,0.5,0.5]; ins.forEach((e,i) => e.value = a[i]); });
+  return ins;
+}
+function text(path, {width="80px", parse=v=>v, title=""}={}){
+  const e = el("input",{type:"text",style:`width:${width}`,title});
+  e.addEventListener("change", () => { const v = parse(e.value); if (v !== undefined){ setP(S,path,v); changed(); } });
+  binders.push(() => { const v = getP(S,path); e.value = Array.isArray(v) ? v.join(", ") : (v ?? ""); });
+  return e;
+}
+function eqEditor(path){
+  const box = el("div",{});
+  const draw = () => {
+    box.innerHTML = "";
+    (getP(S,path)||[]).forEach((b,i) => {
+      const t = el("select",{}); ["peak","lowshelf","highshelf","lowpass","highpass","bandpass","notch"].forEach(x => t.append(el("option",{value:x},x))); t.value = b.type;
+      const f = el("input",{type:"number",value:b.freq,step:"1",title:"Hz"});
+      const g = el("input",{type:"number",value:b.gain_db ?? 0,step:"0.5",title:"gain dB"});
+      const q = el("input",{type:"number",value:b.q ?? (b.order ?? 0.707),step:"0.1",title:"Q (or order for LP/HP)"});
+      const x = el("button",{title:"remove",style:"padding:2px"},"×");
+      const upd = () => { const a = getP(S,path); const o = {type:t.value, freq:+f.value}; if (["peak","lowshelf","highshelf"].includes(t.value)) o.gain_db = +g.value; if (["lowpass","highpass"].includes(t.value)) o.order = Math.max(1,Math.round(+q.value)); else o.q = +q.value; a[i] = o; changed(); };
+      [t,f,g,q].forEach(e => e.addEventListener("change", upd));
+      x.addEventListener("click", () => { getP(S,path).splice(i,1); draw(); changed(); });
+      box.append(el("div",{class:"eqrow"}, t, f, g, q, x));
+    });
+    box.append(el("div",{class:"hint"}, "type · Hz · dB · Q (order for LP/HP)"));
+    box.append(el("button",{onclick:() => { if (!getP(S,path)) setP(S,path,[]); getP(S,path).push({type:"peak",freq:1000,gain_db:0,q:1}); draw(); changed(); }}, "+ add band"));
+  };
+  binders.push(draw);
+  return box;
+}
+function section(title, tag, open, ...content){ const d = el("details", open ? {open:""} : {}); d.append(el("summary",{}, title, tag ? el("span",{class:"tag", id:"tag-"+tag}, "") : ""), el("div",{class:"sec"}, ...content)); return d; }
+function show(id, on){ const e = document.getElementById(id); if (e) e.classList.toggle("hide", !on); }
+function tag(id, t){ const e = document.getElementById("tag-"+id); if (e) e.textContent = t; }
+
+/* ------------------------------------------------------------------ pitch helpers */
+function noteHz(v){
+  if (typeof v === "number") return v;
+  const s = String(v).trim(); if (/^[\d.]+$/.test(s)) return +s;
+  const m = /^([A-Ga-g])([#b]*)(-?\d+)$/.exec(s); if (!m) return NaN;
+  const base = {C:-9,D:-7,E:-5,F:-4,G:-2,A:0,B:2}[m[1].toUpperCase()];
+  const semi = base + (m[2].split("#").length-1) - (m[2].split("b").length-1) + 12*(+m[3]-4);
+  return 440 * Math.pow(2, semi/12);
+}
+function hzNote(f){
+  if (!(f > 0)) return "–";
+  const n = 12*Math.log2(f/440) + 57, r = Math.round(n), c = Math.round((n-r)*100);
+  return `${NOTES[((r%12)+12)%12]}${Math.floor(r/12)}${c ? (c>0?" +":" ")+c+"¢" : ""}`;
+}
+function fmtHz(f){ return !(f > 0) ? "–" : f >= 1000 ? (f/1000).toFixed(2)+" kHz" : f >= 10 ? f.toFixed(1)+" Hz" : f.toFixed(2)+" Hz"; }
+function fmtLen(m){ return m >= 1000 ? (m/1000).toFixed(2)+" km" : m >= 1 ? m.toFixed(2)+" m" : m >= 0.01 ? (m*100).toFixed(1)+" cm" : (m*1000).toFixed(1)+" mm"; }
+
+/* live estimates (no render needed) */
+function wood(beta){ const b = Math.min(0.6, Math.max(1e-7, +beta || 0)), rho = (1-b)*998 + b*1.2, kap = (1-b)/(998*1482*1482) + b/(1.2*343*343); return [1/Math.sqrt(rho*kap), rho]; }
+function mediumCR(){ const s = S.space, m = META.media[s.medium] || {c:343, rho:1.2}; let [c, rho] = s.medium === "bubbly_water" ? wood(s.void_fraction) : [m.c, m.rho]; if (!(s.speed_of_sound == null || s.speed_of_sound === "auto")) c = +s.speed_of_sound; return [c, rho]; }
+function cEff(){ return mediumCR()[0]; }
+/* wall impedance vs. medium -> boundary type and wall reflection (mirrors the engine) */
+function boundaryInfo(){
+  const s = S.space, [c, rho] = mediumCR(), w = META.walls[s.wall] || [2000, 3000];
+  let zw = w[0]*w[1];
+  if (!(s.wall_thickness_mm == null || s.wall_thickness_mm === "auto")) zw = Math.min(zw, 2*Math.PI*1000*w[0]*s.wall_thickness_mm/1000*(+s.scale||1));
+  const zr = zw/(rho*c), R = (zr-1)/(zr+1), soft = s.boundary === "auto" ? zr < 1 : s.boundary === "soft";
+  return {zr, R, soft};
+}
+function sizeInfo(){
+  const s = S.space, k = +s.scale || 1, c = cEff(), soft = boundaryInfo().soft;
+  let span = 0, f0 = NaN;
+  if (s.shape === "box"){ const d = s.dimensions.map(x => x*k); span = Math.max(...d); f0 = soft ? 0.5*c*Math.sqrt(d.reduce((q,L) => q + 1/(L*L), 0)) : c/(2*span); }
+  else if (s.shape === "sphere"){ const a = s.radius_m*k; span = 2*a; f0 = (soft ? Math.PI : 2.0816)*c/(2*Math.PI*a); }
+  else {
+    const a = s.radius_m*k, L = s.length_m*k; span = Math.max(L, 2*a);
+    const ends = s.shape === "bottle" ? "closed" : (s.ends || "closed");
+    if (soft){ const Le = L + ({open:2, half:1}[ends] || 0)*0.61*a; f0 = c/(2*Math.PI)*Math.sqrt((2.4048/a)**2 + (Math.PI/Le)**2); }
+    else {
+      const rad = 1.8412*c/(2*Math.PI*a);
+      const ax = ends === "open" ? c/(2*(L+1.22*a)) : ends === "half" ? c/(4*(L+0.61*a)) : c/(2*L);
+      f0 = Math.min(rad, ax);
+      if (s.shape === "bottle"){ const rn = s.neck_radius_m*k, ln = s.neck_length_m*k, A = Math.PI*rn*rn, V = Math.PI*a*a*L; f0 = Math.min(f0, c/(2*Math.PI)*Math.sqrt(A/(V*(ln+1.7*rn)))); }
+    }
+  }
+  const like = span < 0.005 ? "a grain of sand" : span < 0.03 ? "a marble" : span < 0.12 ? "a mug" : span < 0.4 ? "a basketball" : span < 1.5 ? "a suitcase" : span < 5 ? "a small room" : span < 15 ? "a hall" : span < 50 ? "a cathedral" : span < 150 ? "a stadium" : span < 500 ? "a skyscraper" : span < 3000 ? "a mountain" : "a small moon";
+  return {span, f0, like, c};
+}
+function updateReadout(){
+  const r = $("#sizeRead"); if (!r || !S) return;
+  const z = sizeInfo();
+  const b = boundaryInfo(), lossPct = Math.round((1 - b.R*b.R)*100*(S.space.transmission ?? 1));
+  r.innerHTML = `span <b>${fmtLen(z.span)}</b>, about the size of ${z.like} · c = ${z.c.toFixed(0)} m/s · lowest mode ≈ <b>${fmtHz(z.f0)}</b> (${hzNote(z.f0)})<br>`
+    + `wall/medium impedance ${b.zr >= 100 ? b.zr.toFixed(0) : b.zr.toPrecision(2)} → <b>${b.soft ? "soft (pressure-release)" : "rigid"}</b> boundary`
+    + (lossPct >= 5 ? ` · <span style="color:var(--warn)">${lossPct}% of the energy leaves through the wall per hit</span>` : "");
+  const hz = noteHz(S.tuning.root); const rh = $("#rootHz"); if (rh) rh.textContent = isNaN(hz) ? "?" : fmtHz(hz);
+  drawStrip();
+}
+/* one period of the scale as ticks */
+function drawStrip(){
+  const sv = $("#strip"); if (!sv || !META) return;
+  let cents, period;
+  if (S.tuning.scale === "custom"){ cents = (S.tuning.custom_cents||[0]).map(Number); period = +S.tuning.custom_period_cents || 1200; }
+  else { const d = META.scale_defs[S.tuning.scale]; if (!d) return; [cents, period] = d; }
+  const W = 400, pad = 8; let h = `<line x1="${pad}" y1="20" x2="${W-pad}" y2="20" stroke="#363042"/>`;
+  for (let c = 0; c <= period; c += 100) { const x = pad + c/period*(W-2*pad); h += `<line x1="${x}" y1="16" x2="${x}" y2="24" stroke="#4a4258"/>`; }
+  cents.forEach((c,i) => { const x = pad + c/period*(W-2*pad); h += `<circle cx="${x}" cy="20" r="${i?4:5.5}" fill="${i?"#b98cff":"#ff7ad9"}"/>`; });
+  h += `<text x="${W-pad}" y="10" fill="#9a93a8" font-size="9" text-anchor="end">${cents.length} pitches / ${period.toFixed(0)}¢ period</text>`;
+  sv.innerHTML = h;
+}
+
+/* ------------------------------------------------------------------ side panel */
+function build(){
+  const side = $("#side"); side.innerHTML = ""; binders.length = 0;
+  const strangeMats = META.strange_materials, otherMats = Object.keys(META.materials).filter(m => !strangeMats.includes(m));
+  const matOpts = [{group:"strange materials", items:strangeMats}, {group:"room materials", items:otherMats}];
+  const scaleChips = el("div",{class:"chips"}, ...[0.1,1,10,60,300,1500].map(v => el("button",{onclick:() => { S.space.scale = v; refreshAll(); changed(); }}, "×"+v)));
+
+  side.append(section("Space", "space", true,
+    row("Shape", seg("space.shape", META.shapes)),
+    el("div",{id:"sz-r"}, row("Radius", ...num("space.radius_m",{min:0.002,max:50,log:true,step:0.001,unit:"m"}))),
+    el("div",{id:"sz-l"}, row("Length", ...num("space.length_m",{min:0.005,max:200,log:true,step:0.001,unit:"m"}))),
+    el("div",{id:"sz-box"}, row("Dimensions (m)", xyz("space.dimensions"))),
+    el("div",{id:"sz-ends"}, row("Ends", sel("space.ends", ["closed","open","half"]))),
+    el("div",{id:"sz-neck"}, row("Neck radius", ...num("space.neck_radius_m",{min:0.001,max:0.2,log:true,step:0.0005,unit:"m"})),
+                             row("Neck length", ...num("space.neck_length_m",{min:0.005,max:0.5,log:true,step:0.001,unit:"m"}))),
+    el("div",{class:"sub"}, el("h4",{},"Scale: gigantify / miniaturise"),
+      row("Scale ×", ...num("space.scale",{min:0.01,max:10000,log:true,step:0.01})),
+      row("", scaleChips),
+      el("div",{class:"readout",id:"sizeRead"},"")),
+    row("Medium", sel("space.medium", [...new Set(Object.values(META.media).map(m => m.group))].map(gr => ({group:gr, items:Object.keys(META.media).filter(k => META.media[k].group === gr)})))),
+    el("div",{id:"md-bub"},
+      row("Void fraction", ...num("space.void_fraction",{min:0.00001,max:0.6,log:true,step:0.00001})),
+      row("Bubble radius", ...num("space.bubble_radius_mm",{min:0.05,max:20,log:true,step:0.01,unit:"mm"}))),
+    row("Speed of sound", ...num("space.speed_of_sound",{min:10,max:8000,log:true,step:1,unit:"m/s",auto:true})),
+    row("Medium absorption ×", ...num("space.medium_absorption_scale",{min:0,max:1000,step:0.1})),
+    row("Wall material", sel("space.wall", matOpts)),
+    row("Boundary", seg("space.boundary", ["auto","rigid","soft"])),
+    row("Wall thickness", ...num("space.wall_thickness_mm",{min:0.05,max:500,log:true,step:0.01,unit:"mm",auto:true})),
+    row("Transmission", ...num("space.transmission",{min:0,max:1,step:0.01})),
+    row("Source xyz (rel)", ...rel3("space.source")),
+    row("Mic xyz (rel)", ...rel3("space.receiver")),
+    el("div",{class:"sub"}, el("h4",{},"Decay"),
+      row("T60", ...num("space.t60",{min:0.02,max:60,log:true,step:0.01,unit:"s",auto:true})),
+      row("Decay scale", ...num("space.decay_scale",{min:0.02,max:20,log:true,step:0.01})),
+      row("T60 floor (freeze)", ...num("space.t60_floor_s",{min:0,max:30,step:0.1,unit:"s"})))
+  ));
+
+  side.append(section("Modes", "modes", false,
+    row("Enabled", chk("modes.enabled")),
+    row("Gain", ...num("modes.gain_db",{min:-30,max:12,step:0.5,unit:"dB"})),
+    row("Max modes", ...num("modes.max_modes",{min:10,max:3000,step:10,log:true,int:true})),
+    row("Highest mode", ...num("modes.f_max_hz",{min:50,max:21000,step:1,log:true,unit:"Hz",auto:true})),
+    row("Detune / shimmer", ...num("modes.detune_cents",{min:0,max:100,step:0.5,unit:"¢"})),
+    el("div",{class:"hint"},"Above the highest synthesised mode the diffuse tail takes over. More modes push the crossover up and cost more render time.")
+  ));
+
+  side.append(section("Tuning: modal / scale resonance", "tune", true,
+    row("Mode", seg("tuning.mode", ["off","snap","replace","add"])),
+    row("Root", text("tuning.root",{width:"70px",title:"note name (A2, C#3, Eb4) or Hz"}), el("span",{class:"hint",style:"margin:0",id:"rootHz"},"")),
+    row("Scale", sel("tuning.scale", [...META.scales, "custom"])),
+    (() => { const sv = document.createElementNS("http://www.w3.org/2000/svg","svg"); sv.setAttribute("class","strip"); sv.id = "strip"; sv.setAttribute("viewBox","0 0 400 34"); return sv; })(),
+    el("div",{id:"tn-custom"},
+      row("Custom cents", text("tuning.custom_cents",{width:"100%",parse:v => { const a = v.split(/[\s,]+/).filter(Boolean).map(Number); return a.every(x => !isNaN(x)) ? a : undefined; }})),
+      row("Period", ...num("tuning.custom_period_cents",{min:100,max:4800,step:1,unit:"¢"}))),
+    el("div",{id:"tn-snap"}, row("Snap amount", ...num("tuning.amount",{min:0,max:1,step:0.01}))),
+    el("div",{id:"tn-rep"},
+      row("Pitch range", ...num("tuning.range_hz.0",{min:20,max:2000,log:true,step:1,unit:"Hz"})),
+      row("", ...num("tuning.range_hz.1",{min:200,max:20000,log:true,step:1,unit:"Hz"})),
+      row("Partials", ...num("tuning.partials",{min:1,max:12,step:1,int:true})),
+      row("Inharmonicity", ...num("tuning.inharmonicity",{min:-0.2,max:0.5,step:0.005})),
+      row("Tilt", ...num("tuning.tilt_db_per_oct",{min:-12,max:6,step:0.5,unit:"dB/oct"})),
+      row("Ring time", ...num("tuning.ring_s",{min:0.05,max:60,log:true,step:0.01,unit:"s",auto:true})),
+      row("Root emphasis", ...num("tuning.root_emphasis_db",{min:0,max:18,step:0.5,unit:"dB"}))),
+    el("div",{class:"hint"},"snap pulls the physical modes onto the scale · replace rings only the scale · add layers both. Root and scale also drive the tonal imprint and the 'note' echo period.")
+  ));
+
+  side.append(section("Tonal imprint", "imp", false,
+    row("Peak gain", ...num("imprint.gain_db",{min:0,max:24,step:0.5,unit:"dB"})),
+    row("Q", ...num("imprint.q",{min:2,max:400,log:true,step:1})),
+    el("div",{class:"hint"},"Resonant peaks at every scale pitch inside the pitch range, applied to the whole reverberant part: diffuse tail, echoes and imported IR too. 0 dB = off.")
+  ));
+
+  side.append(section("Diffuse tail", "dif", false,
+    row("Enabled", chk("diffuse.enabled")),
+    row("Gain", ...num("diffuse.gain_db",{min:-40,max:12,step:0.5,unit:"dB"})),
+    row("Range", sel("diffuse.range", [["above_modes","above the modes"],["full","full band"]]))
+  ));
+
+  side.append(section("Echoes / flutter", "echo", false,
+    row("Enabled", chk("echoes.enabled")),
+    row("Period", sel("echoes.period", [["auto","across the shape"],["note","root note period"],["ms","milliseconds"]])),
+    el("div",{id:"ec-ms"}, row("Period", ...num("echoes.period_ms",{min:0.5,max:2000,log:true,step:0.1,unit:"ms"}))),
+    row("Dispersion", ...num("echoes.dispersion",{min:-3,max:3,step:0.01})),
+    row("Gain", ...num("echoes.gain_db",{min:-40,max:12,step:0.5,unit:"dB"})),
+    el("div",{class:"hint"},"Each pass loses energy according to the space's T60. Dispersion > 0 delays the highs, < 0 the lows (spring chirps).")
+  ));
+
+  side.append(section("Shell: the walls ring", "shell", false,
+    row("Enabled", chk("shell.enabled")),
+    row("Material", sel("shell.material", [["auto","(same as wall)"], ...strangeMats, ...otherMats])),
+    row("Thickness", ...num("shell.thickness_mm",{min:0.05,max:200,log:true,step:0.01,unit:"mm"})),
+    row("Fundamental", ...num("shell.f0_hz",{min:5,max:5000,log:true,step:0.1,unit:"Hz",auto:true})),
+    row("Mode count", ...num("shell.count",{min:1,max:400,step:1,int:true})),
+    row("Gain", ...num("shell.gain_db",{min:-40,max:12,step:0.5,unit:"dB"})),
+    el("div",{class:"hint"},"Plate modes of the shell: f ∝ thickness × bending-wave speed / size², T60 = 2.2 / (f × loss factor). Thickness scales with the space.")
+  ));
+
+  side.append(section("Motion: breathing spaces", "mot", false,
+    row("Glide", ...num("motion.glide_oct_per_s",{min:-3,max:3,step:0.01,unit:"oct/s"})),
+    row("Wobble depth", ...num("motion.wobble_cents",{min:0,max:300,step:1,unit:"¢"})),
+    row("Wobble rate", ...num("motion.wobble_hz",{min:0.01,max:30,log:true,step:0.01,unit:"Hz"})),
+    el("div",{class:"hint"},"Glide > 0: the space expands while it rings (all modes fall). Glide < 0: it shrinks (modes rise). Wobble gives each mode its own slow vibrato.")
+  ));
+
+  side.append(section("Envelope", "env", false,
+    row("Bloom", ...num("envelope.bloom_ms",{min:0,max:5000,step:5,unit:"ms"})),
+    row("Gate", ...num("envelope.gate_ms",{min:0,max:20000,step:10,unit:"ms"})),
+    row("Reverse", chk("envelope.reverse")),
+    el("div",{class:"hint"},"Gate 0 = off.")
+  ));
+
+  const fileIn = el("input",{type:"file",accept:"audio/*,.wav,.flac,.aif,.aiff"});
+  fileIn.addEventListener("change", () => { const f = fileIn.files[0]; if (!f) return; const fr = new FileReader(); fr.onload = () => { IMPORT_B64 = fr.result; IMPORT_NAME = f.name; updateVisibility(); }; fr.readAsDataURL(f); });
+  side.append(section("Imported IR: gigantify any IR", "imp2", false,
+    row("Enabled", chk("imported.enabled")),
+    row("Source", sel("imported.source", [["last_render","last standard render"],["file","file…"]])),
+    el("div",{id:"im-file"}, row("IR file", fileIn)),
+    el("div",{class:"hint",id:"im-info"},""),
+    row("Scale ×", ...num("imported.scale",{min:0.05,max:200,log:true,step:0.01})),
+    row("Gain", ...num("imported.gain_db",{min:-40,max:12,step:0.5,unit:"dB"})),
+    el("div",{class:"hint"},"Played slower by the scale (a bigger, lower, longer space), then mixed with the other layers and imprinted by the tuning.")
+  ));
+
+  side.append(section("Output & direct sound", "out", false,
+    row("Channels", seg("output.channels", [[1,"mono"],[2,"stereo"]])),
+    row("Stereo width", ...num("output.width",{min:0,max:1,step:0.01})),
+    row("Sample rate", sel("output.sample_rate", [44100,48000,88200,96000])),
+    row("Format", sel("output.format", ["PCM_16","PCM_24","PCM_32","FLOAT"])),
+    row("Length", ...num("output.length_s",{min:0.05,max:60,step:0.05,unit:"s",auto:true})),
+    row("Max length", ...num("output.max_length_s",{min:0.5,max:60,step:0.5,unit:"s"})),
+    row("Auto-length floor", ...num("output.trim_db",{min:30,max:120,step:1,unit:"dB"})),
+    row("Peak", ...num("output.peak_dbfs",{min:-24,max:0,step:0.1,unit:"dBFS"})),
+    row("DC high-pass", ...num("output.dc_highpass_hz",{min:0,max:60,step:1,unit:"Hz"})),
+    row("Seed", ...num("seed",{min:0,max:9999,step:1,int:true})),
+    el("div",{class:"sub"}, el("h4",{},"Direct sound"),
+      row("Enabled", chk("direct.enabled")),
+      row("Direct / reverb", ...num("direct.level_db",{min:-40,max:20,step:0.5,unit:"dB"})))
+  ));
+
+  side.append(section("EQ", "eq", false, eqEditor("eq")));
+  refreshAll();
+}
+function refreshAll(){ binders.forEach(b => b()); updateVisibility(); updateReadout(); }
+function updateVisibility(){
+  const sh = S.space.shape, tm = S.tuning.mode;
+  show("md-bub", S.space.medium === "bubbly_water");
+  show("sz-r", sh !== "box"); show("sz-l", ["cylinder","pipe","bottle"].includes(sh)); show("sz-box", sh === "box");
+  show("sz-ends", sh === "cylinder" || sh === "pipe"); show("sz-neck", sh === "bottle");
+  show("tn-custom", S.tuning.scale === "custom"); show("tn-snap", tm === "snap"); show("tn-rep", tm === "replace" || tm === "add" || S.imprint.gain_db > 0);
+  show("ec-ms", S.echoes.period === "ms"); show("im-file", S.imported.source === "file");
+  const ii = $("#im-info");
+  if (ii) ii.textContent = S.imported.source === "file" ? (IMPORT_NAME ? "file: " + IMPORT_NAME : "no file chosen") : (META.standard ? "last standard render: " + META.standard : "no standard render yet: render one in the standard view first");
+  tag("space", `${sh} ×${(+S.space.scale).toPrecision(3)}`); tag("tune", tm === "off" ? "off" : `${tm} · ${S.tuning.root} ${S.tuning.scale}`);
+  tag("modes", S.modes.enabled ? S.modes.max_modes + " max" : "off"); tag("dif", S.diffuse.enabled ? S.diffuse.range.replace("_"," ") : "off");
+  tag("echo", S.echoes.enabled ? S.echoes.period : "off"); tag("shell", S.shell.enabled ? "on" : "off");
+  tag("mot", (S.motion.glide_oct_per_s || S.motion.wobble_cents) ? "moving" : "still"); tag("imp", S.imprint.gain_db > 0 ? `+${S.imprint.gain_db} dB` : "off");
+  tag("env", [S.envelope.bloom_ms > 0 && "bloom", S.envelope.gate_ms > 0 && "gate", S.envelope.reverse && "reverse"].filter(Boolean).join(" · ") || "–");
+  tag("imp2", S.imported.enabled ? "×" + S.imported.scale : "off"); tag("out", `${S.output.channels === 1 ? "mono" : "stereo"} · ${S.output.sample_rate}`);
+}
+function syncJson(){ $("#jsonTa").value = JSON.stringify(S, null, 2); }
+
+/* ------------------------------------------------------------------ actions */
+async function api(path, body){
+  const r = await fetch(path, body ? {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)} : {});
+  const j = await r.json(); if (!r.ok) throw Object.assign(new Error(j.error || r.statusText), {status:r.status, body:j}); return j;
+}
+function status(t, err=false, busy=false){ const s = $("#status"); s.className = err ? "err" : ""; s.innerHTML = (busy ? '<span class="spin"></span> ' : "") + t; }
+function showAbout(){ const a = $("#aboutBox"); a.textContent = S._about || ""; a.classList.toggle("hide", !S._about); }
+function loadPreset(p){ S = merge(META.defaults, p); if (!p._about) delete S._about; $("#nameIn").value = S.name || "strange"; refreshAll(); syncJson(); showAbout(); }
+async function render(){
+  S.name = $("#nameIn").value || "strange"; syncJson();
+  const btn = $("#renderBtn"); btn.disabled = true;
+  status("rendering…", false, true);
+  try {
+    const body = {preset:S, name:S.name};
+    if (S.imported.enabled && S.imported.source === "file") body.import_b64 = IMPORT_B64;
+    const r = await api("/api/strange/render", body);
+    LAST = r; showResult(r); status(`done in ${r.seconds}s`);
+  } catch(e){ status(e.message, true); }
+  btn.disabled = false;
+}
+function card(k, v){ return el("div",{class:"card"}, el("div",{class:"k"},k), el("div",{class:"v"},v)); }
+function fmt(v, d=2){ return (v == null || !isFinite(v)) ? "–" : (+v).toFixed(d); }
+function showResult(r){
+  const a = r.analysis || {}, b = a.broadband || {}, i = r.info || {};
+  const c = $("#cards"); c.innerHTML = "";
+  const t1k = a.bands && a.bands["1000"] ? a.bands["1000"].T30 : null;
+  c.append(card("length", fmt(i.length_s) + " s"), card("lowest mode", i.lowest_mode_hz ? fmtHz(i.lowest_mode_hz) : "–"),
+           card("modes rendered", String(i.synth_modes ?? 0)), card("T60 @1k (model)", fmt(i.t60_bands && i.t60_bands["1000.0"] || (i.t60_bands||{})[1000]) + " s"),
+           card("T30 @1k (measured)", fmt(t1k) + " s"), card("volume", i.volume_m3 >= 1 ? fmt(i.volume_m3,1) + " m³" : fmt(i.volume_m3*1000,2) + " L"),
+           card("c", fmt(i.speed_of_sound,0) + " m/s"), card("render", r.seconds + " s"));
+  if (i.modal_crossover_hz && i.modal_crossover_hz < (i.sample_rate||48000)*0.44) c.append(card("modes → diffuse", fmtHz(i.modal_crossover_hz)));
+  c.append(card("medium", `${(i.medium||"").replaceAll("_"," ")} · ${i.boundary}`));
+  if (i.minnaert_hz) c.append(card("bubble resonance", fmtHz(i.minnaert_hz)));
+  if (i.helmholtz_hz) c.append(card("Helmholtz", fmtHz(i.helmholtz_hz) + " · " + hzNote(i.helmholtz_hz)));
+  if (i.shell_f11_hz) c.append(card("shell f₁₁", fmtHz(i.shell_f11_hz)));
+  if (i.echo_period_ms) c.append(card("echo period", fmt(i.echo_period_ms,2) + " ms"));
+  if (i.root_hz) c.append(card("root", fmtHz(i.root_hz) + " · " + hzNote(i.root_hz)));
+  if (r.files.report){ $("#repImg").src = r.files.report; $("#repHint").textContent = ""; }
+  else { $("#repImg").removeAttribute("src"); $("#repHint").textContent = "Press Analyze for the report and measured T30."; }
+  $("#prevAudio").src = r.files.preview;
+  $("#dlinfo").textContent = `wav → ${r.files.wav_path}`;
+  $("#metPre").textContent = r.table || "";
+  const info = clone(i); delete info.t60_bands; $("#infoPre").textContent = JSON.stringify({...info, t60_bands: i.t60_bands}, null, 2);
+  drawEnv(r.envelope); drawMap(r.display);
+}
+function prepCanvas(cv){ const dpr = window.devicePixelRatio || 1; cv.width = Math.round(cv.clientWidth*dpr); cv.height = Math.round(cv.clientHeight*dpr); const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); return [g, cv.clientWidth, cv.clientHeight]; }
+function drawEnv(e){
+  const [g, W, H] = prepCanvas($("#envc")); g.clearRect(0,0,W,H); if (!e) return;
+  const d = e.db, n = d.length;
+  g.strokeStyle = "#363042"; g.lineWidth = 1; g.fillStyle = "#9a93a8"; g.font = "11px sans-serif";
+  for (let db = -20; db >= -100; db -= 20){ const y = (-db/110)*H; g.beginPath(); g.moveTo(0,y); g.lineTo(W,y); g.stroke(); g.fillText(db + " dB", 4, y-2); }
+  const T = n * e.hop_s, st = T > 12 ? 2 : T > 6 ? 1 : T > 2 ? 0.5 : T > 0.6 ? 0.1 : 0.05;
+  for (let s = st; s < T; s += st){ const x = s/T*W; g.beginPath(); g.moveTo(x,0); g.lineTo(x,H); g.stroke(); g.fillText(+s.toFixed(2) + " s", x+3, H-4); }
+  const grad = g.createLinearGradient(0,0,W,0); grad.addColorStop(0,"#ff7ad9"); grad.addColorStop(1,"#b98cff");
+  g.strokeStyle = grad; g.lineWidth = 1.5; g.beginPath();
+  d.forEach((v,k) => { const x = k/n*W, y = Math.min(H, (-v/110)*H); k ? g.lineTo(x,y) : g.moveTo(x,y); }); g.stroke();
+}
+let MAP = null;
+const F0 = 16, F1 = 22000, mapX = (f, W) => (Math.log10(f) - Math.log10(F0)) / (Math.log10(F1) - Math.log10(F0)) * W, mapY = (db, H) => 14 + (-db/66) * (H - 30);
+function drawMap(d){
+  MAP = d; const [g, W, H] = prepCanvas($("#mapc")); g.clearRect(0,0,W,H); if (!d) return;
+  g.font = "10.5px sans-serif"; g.fillStyle = "#9a93a8";
+  [20,50,100,200,500,1000,2000,5000,10000,20000].forEach(f => { const x = mapX(f,W); g.strokeStyle = "#2b2635"; g.beginPath(); g.moveTo(x,0); g.lineTo(x,H-14); g.stroke(); g.fillText(f >= 1000 ? f/1000 + "k" : f, x+2, H-3); });
+  (d.grid||[]).forEach(([f,deg]) => { const x = mapX(f,W); g.strokeStyle = deg === 0 ? "#7a5f99" : "#3f3550"; g.lineWidth = deg === 0 ? 1.4 : 1; g.beginPath(); g.moveTo(x,10); g.lineTo(x,H-14); g.stroke(); });
+  g.lineWidth = 1;
+  if (d.crossover_hz){ const x = mapX(d.crossover_hz,W); g.setLineDash([4,3]); g.strokeStyle = "#9a93a8"; g.beginPath(); g.moveTo(x,0); g.lineTo(x,H-14); g.stroke(); g.setLineDash([]); g.fillStyle = "#9a93a8"; g.fillText("diffuse →", x+4, 11); }
+  const ms = (d.modes||[]).slice().sort((a,b) => a[1]-b[1]);
+  ms.forEach(([f,db,t,k]) => { if (f < F0 || f > F1) return; const x = mapX(f,W), y = mapY(Math.max(db,-66),H); g.strokeStyle = KIND_COL[k]; g.globalAlpha = 0.35 + 0.65*Math.min(1, (db+66)/66); g.beginPath(); g.moveTo(x,H-14); g.lineTo(x,y); g.stroke(); });
+  g.globalAlpha = 1;
+  if (!ms.length){ g.fillStyle = "#9a93a8"; g.fillText("no modes (diffuse / echo / imported layers only)", 10, 24); }
+}
+function mapHover(e){
+  const tip = $("#tip"); if (!MAP || !MAP.modes || !MAP.modes.length){ tip.style.display = "none"; return; }
+  const cv = $("#mapc"), r = cv.getBoundingClientRect(), x = e.clientX - r.left, W = r.width;
+  let best = null, bd = 1e9; MAP.modes.forEach(m => { const d = Math.abs(mapX(m[0],W) - x) - (m[1] > -30 ? 1.5 : 0); if (d < bd){ bd = d; best = m; } });
+  if (!best || bd > 6){ tip.style.display = "none"; return; }
+  tip.innerHTML = `${KIND_NAME[best[3]]} · <b>${fmtHz(best[0])}</b> · ${hzNote(best[0])}<br>${best[1].toFixed(1)} dB · T60 ${best[2] >= 1 ? best[2].toFixed(2) : (best[2]*1000).toFixed(0) + " m"}s`;
+  tip.style.display = "block"; tip.style.left = (e.clientX + 12) + "px"; tip.style.top = (e.clientY + 10) + "px";
+}
+async function audition(){
+  if (!LAST){ status("render first", true); return; }
+  const body = {wet:+$("#wetIn").value, left:0, right:1};
+  if ($("#drySel").value === "file"){
+    const f = $("#dryFile").files[0]; if (!f){ $("#dryFile").click(); return; }
+    body.dry_b64 = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(f); });
+  } else body.dry = $("#drySel").value;
+  status("convolving…", false, true);
+  try { const r = await api("/api/audition", body); $("#audAudio").src = r.url; $("#audAudio").play(); status("audition ready"); }
+  catch(e){ status(e.message, true); }
+}
+async function savePreset(overwrite=false){
+  const name = $("#nameIn").value || "strange"; S.name = name;
+  try { await api("/api/strange/save_preset", {name, preset:S, overwrite}); status(`saved presets/strange/${name}.json`); await refreshMeta(name); }
+  catch(e){ if (e.status === 409 && confirm(`Preset '${name}' exists. Overwrite?`)) return savePreset(true); status(e.message, true); }
+}
+async function refreshMeta(selName){
+  const m = await api("/api/strange/meta"); const defs = META && META.scale_defs; META = m; META.scale_defs = defs || {};
+  const ps = $("#presetSel"); const cur = selName || ps.value; ps.innerHTML = ""; ps.append(el("option",{value:""},"— load strange space —"));
+  META.presets.forEach(p => ps.append(el("option",{value:p},p.replaceAll("_"," ")))); if (cur) ps.value = cur;
+  if (S) updateVisibility();
+}
+
+/* ------------------------------------------------------------------ mutate */
+function mutate(){
+  const R = Math.random, pick = a => a[Math.floor(R()*a.length)], logU = (a,b) => Math.exp(Math.log(a) + R()*(Math.log(b)-Math.log(a)));
+  const s = S.space;
+  s.shape = pick(META.shapes);
+  s.radius_m = +logU(0.01, 2).toPrecision(3); s.length_m = +logU(s.radius_m*1.5, s.radius_m*40).toPrecision(3);
+  s.dimensions = [logU(0.05,8), logU(0.05,8), logU(0.05,8)].map(v => +v.toPrecision(3));
+  s.ends = pick(["closed","open","half"]); s.neck_radius_m = +(s.radius_m*logU(0.1,0.4)).toPrecision(3); s.neck_length_m = +(s.radius_m*logU(0.5,3)).toPrecision(3);
+  s.scale = +pick([1, 1, logU(0.2,5), logU(5,100), logU(50,2000)]).toPrecision(3);
+  s.medium = R() < 0.45 ? "air" : pick(Object.keys(META.media)); s.speed_of_sound = "auto"; s.boundary = "auto";
+  s.void_fraction = +logU(0.0005, 0.3).toPrecision(2); s.transmission = +pick([1, 1, R()]).toFixed(2); s.medium_absorption_scale = 1;
+  s.wall = pick(META.strange_materials); s.t60 = "auto"; s.decay_scale = +pick([1, logU(0.3,4)]).toPrecision(3); s.t60_floor_s = R() < 0.15 ? +logU(2,10).toFixed(1) : 0;
+  s.source = [R(),R(),R()].map(v => +(0.1+0.8*v).toFixed(2)); s.receiver = [R(),R(),R()].map(v => +(0.1+0.8*v).toFixed(2));
+  const t = S.tuning; t.mode = pick(["off","snap","snap","replace","add"]); t.scale = pick(META.scales);
+  t.root = pick(["C","D","E","F","G","A","Bb"]) + pick([1,2,2,3]); t.amount = +(0.6+0.4*R()).toFixed(2);
+  t.partials = 1 + Math.floor(R()*5); t.inharmonicity = R() < 0.3 ? +(R()*0.08).toFixed(3) : 0; t.ring_s = R() < 0.5 ? "auto" : +logU(1,10).toFixed(2);
+  S.modes.enabled = true; S.modes.gain_db = 0; S.imported.enabled = false; S.direct.enabled = true;
+  S.modes.detune_cents = R() < 0.5 ? 0 : +logU(1,20).toFixed(1); S.modes.max_modes = pick([300,600,900]);
+  S.diffuse.enabled = t.mode !== "replace" || R() < 0.3; S.diffuse.gain_db = +(R()*-8).toFixed(1);
+  S.echoes.enabled = R() < 0.4; S.echoes.period = pick(["auto","auto","note"]); S.echoes.dispersion = R() < 0.5 ? 0 : +((R()*2-1)*1.5).toFixed(2); S.echoes.gain_db = +(-4 - R()*12).toFixed(1);
+  S.shell.enabled = R() < 0.35; S.shell.material = "auto"; S.shell.thickness_mm = +logU(0.2,10).toPrecision(2); S.shell.f0_hz = "auto";
+  S.motion.glide_oct_per_s = R() < 0.2 ? +((R()*2-1)*1.2).toFixed(2) : 0; S.motion.wobble_cents = R() < 0.3 ? +logU(3,60).toFixed(0) : 0;
+  S.imprint.gain_db = t.mode !== "off" && R() < 0.5 ? +logU(3,14).toFixed(1) : 0;
+  S.envelope.bloom_ms = R() < 0.25 ? +logU(50,1500).toFixed(0) : 0; S.envelope.gate_ms = 0; S.envelope.reverse = R() < 0.1;
+  S.output.max_length_s = 12; S.seed = Math.floor(R()*9999); delete S._about;
+  $("#nameIn").value = `mutant_${S.seed}`; showAbout(); refreshAll(); changed();
+  status("mutated: render to hear it");
+}
+
+/* ------------------------------------------------------------------ init */
+(async function init(){
+  await refreshMeta();
+  META.scale_defs = await api("/api/strange/scales");
+  S = clone(META.defaults);
+  build(); syncJson(); $("#nameIn").value = S.name;
+  $("#presetSel").addEventListener("change", async e => { if (!e.target.value) return; const p = await api("/api/strange/preset?name=" + encodeURIComponent(e.target.value)); loadPreset(p); status(`loaded ${e.target.value}`); });
+  $("#renderBtn").addEventListener("click", render);
+  $("#saveBtn").addEventListener("click", () => savePreset(false));
+  $("#mutateBtn").addEventListener("click", mutate);
+  $("#audBtn").addEventListener("click", audition);
+  $("#anaBtn").addEventListener("click", async () => {
+    if (!LAST){ status("render first", true); return; }
+    const b = $("#anaBtn"); b.disabled = true; status("analysing…", false, true);
+    try {
+      const a = await api("/api/analyze", {kind:"strange"});
+      Object.assign(LAST, {analysis:a.analysis, table:a.table}); Object.assign(LAST.files, a.files);
+      showResult(LAST); status(`analysis done in ${a.seconds}s`);
+    } catch(e){ status(e.message, true); }
+    b.disabled = false;
+  });
+  $("#drySel").addEventListener("change", e => { if (e.target.value === "file") $("#dryFile").click(); });
+  $("#applyJson").addEventListener("click", () => { try { S = merge(META.defaults, JSON.parse($("#jsonTa").value)); refreshAll(); syncJson(); showAbout(); status("JSON applied"); } catch(e){ status("JSON error: " + e.message, true); } });
+  $("#resetDefaults").addEventListener("click", () => loadPreset({}));
+  document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("on", x === b));
+    document.querySelectorAll(".pane").forEach(p => p.classList.toggle("on", p.id === "p-" + b.dataset.t));
+  }));
+  $("#backBtn").addEventListener("click", () => {
+    document.querySelectorAll("audio").forEach(a => a.pause());
+    if (window.parent !== window) window.parent.postMessage("irgen:standard", location.origin); else location.href = "/";
+  });
+  window.addEventListener("message", e => { if (e.origin === location.origin && e.data === "irgen:show") refreshMeta(); });
+  $("#mapc").addEventListener("mousemove", mapHover); $("#mapc").addEventListener("mouseleave", () => $("#tip").style.display = "none");
+  window.addEventListener("resize", () => { if (LAST){ drawEnv(LAST.envelope); drawMap(LAST.display); } });
+  document.addEventListener("keydown", e => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") render(); });
+  drawMap(null);
+})();
+</script>
+</body>
+</html>

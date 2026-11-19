@@ -1,0 +1,19 @@
+{
+  "name": "molten_iron_crucible",
+  "_about": "A ceramic crucible full of molten iron. The ceramic is softer than the iron, so the boundary is pressure-release; scaled 40x so the modes fall into the audible range.",
+  "space": {
+    "shape": "cylinder",
+    "radius_m": 0.2,
+    "length_m": 0.35,
+    "wall": "ceramic",
+    "medium": "molten_iron",
+    "scale": 40,
+    "transmission": 0.06
+  },
+  "tuning": {
+    "mode": "snap",
+    "root": "C2",
+    "scale": "phrygian",
+    "amount": 0.6
+  }
+}

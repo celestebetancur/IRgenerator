@@ -84,6 +84,7 @@ canvas{width:100%;height:120px;background:var(--panel);border:1px solid var(--li
   <div class="toggle" id="modeToggle" title="sets early/late sources">
     <button data-m="physical">Physical</button><button data-m="hybrid">Hybrid</button><button data-m="perceptual">Perceptual</button>
   </div>
+  <button id="strangeBtn" title="open the strange-spaces layer: bizarre, miniature, gigantified and scale-tuned IRs">✦ Strange spaces</button>
   <span class="sp"></span>
   <span id="status">ready</span>
   <button class="primary" id="renderBtn">Render ▸</button>
@@ -111,7 +112,8 @@ canvas{width:100%;height:120px;background:var(--panel);border:1px solid var(--li
   <div class="tabs" id="tabs">
     <button data-t="rep" class="on">Report</button><button data-t="mc">Multichannel</button><button data-t="met">Metrics</button><button data-t="json">Preset JSON</button>
   </div>
-  <div class="pane on" id="p-rep"><img id="repImg" alt=""><div class="hint" id="repHint">Render to see the analysis report.</div></div>
+  <div style="display:flex;gap:8px;align-items:center;margin:0 0 8px"><button id="anaBtn" title="ISO 3382 analysis and report of the last render (only computed on request)">Analyze ▸</button><span class="hint" style="margin:0">analysis runs on request (renders stay fast)</span></div>
+  <div class="pane on" id="p-rep"><img id="repImg" alt=""><div class="hint" id="repHint">Render, then press Analyze for the report.</div></div>
   <div class="pane" id="p-mc"><div id="mcBadges"></div><img id="mcImg" alt=""><div class="hint" id="mcHint">Set Multichannel → channels &gt; 1.</div></div>
   <div class="pane" id="p-met"><pre id="metPre">—</pre><pre id="infoPre"></pre></div>
   <div class="pane" id="p-json">
@@ -121,6 +123,7 @@ canvas{width:100%;height:120px;background:var(--panel);border:1px solid var(--li
   </div>
 </main>
 </div>
+<iframe id="strangeFrame" class="hide" title="strange spaces" style="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:50;background:#141218"></iframe>
 
 <script>
 "use strict";
@@ -462,7 +465,8 @@ function showResult(r){
            card("C80", fmt(b.C80,1) + " dB"), card("D50", fmt(b.D50)), card("DRR", fmt(a.DRR_dB,1) + " dB"),
            card("channels", String(i.channels || 1)), card("render", r.seconds + " s"));
   if (i.room_volume_m3) c.append(card("volume", fmt(i.room_volume_m3,0) + " m³"), card("mixing time", fmt(i.mixing_time_ms,0) + " ms"), card("Schroeder f", fmt(i.schroeder_hz,0) + " Hz"));
-  $("#repImg").src = r.files.report || ""; $("#repHint").textContent = "";
+  if (r.files.report){ $("#repImg").src = r.files.report; $("#repHint").textContent = ""; }
+  else { $("#repImg").removeAttribute("src"); $("#repHint").textContent = "Press Analyze for the report and metrics."; }
   $("#prevAudio").src = r.files.preview;
   $("#dlinfo").textContent = `${r.files.n_wav} wav file(s) → ${r.files.wav_dir}`;
   $("#metPre").textContent = r.table || "";
@@ -474,7 +478,7 @@ function showResult(r){
     const s = r.multichannel.similarity, d = r.multichannel.decorrelation;
     Object.entries(s.within_jnd).forEach(([k,v]) => mb.append(el("span",{class:"badge " + (v ? "ok" : "no")}, `${k} ${v ? "within JND" : "outside JND"}`)));
     mb.append(el("div",{class:"hint"}, `late |corr| mean ${fmt(d.late_abs_corr_mean,3)}, max ${fmt(d.late_abs_corr_max,3)} · coherence error mean ${fmt(d.coherence_abs_error_mean,3)} · level spread ${fmt(s.level_spread_db)} dB · T30 (500–1k) max dev ${fmt(s.T30_mid_max_dev_pct,1)} %`));
-  } else { $("#mcImg").removeAttribute("src"); $("#mcHint").textContent = "Set Multichannel → channels > 1."; }
+  } else { $("#mcImg").removeAttribute("src"); $("#mcHint").textContent = (i.channels || 1) > 1 ? "Press Analyze for the multichannel report." : "Set Multichannel → channels > 1."; }
   drawEnv(r.envelope);
 }
 function drawEnv(e){
@@ -522,6 +526,16 @@ async function refreshPresetList(selName){
   $("#renderBtn").addEventListener("click", render);
   $("#saveBtn").addEventListener("click", () => savePreset(false));
   $("#audBtn").addEventListener("click", audition);
+  $("#anaBtn").addEventListener("click", async () => {
+    if (!LAST){ status("render first", true); return; }
+    const b = $("#anaBtn"); b.disabled = true; status("analysing…", false, true);
+    try {
+      const a = await api("/api/analyze", {kind:"standard"});
+      Object.assign(LAST, {analysis:a.analysis, multichannel:a.multichannel, table:a.table});
+      Object.assign(LAST.files, a.files); showResult(LAST); status(`analysis done in ${a.seconds}s`);
+    } catch(e){ status(e.message, true); }
+    b.disabled = false;
+  });
   $("#drySel").addEventListener("change", e => { if (e.target.value === "file") $("#dryFile").click(); });
   $("#applyJson").addEventListener("click", () => { try { S = merge(META.defaults, JSON.parse($("#jsonTa").value)); normalizeState(); refreshAll(); syncJson(); status("JSON applied"); } catch(e){ status("JSON error: " + e.message, true); } });
   $("#resetDefaults").addEventListener("click", () => loadPreset({}));
@@ -537,6 +551,15 @@ async function refreshPresetList(selName){
     refreshAll(); changed();
   }));
   window.addEventListener("resize", () => LAST && drawEnv(LAST.envelope));
+  // strange-spaces layer: separate page in an overlay, so this page's state stays intact
+  $("#strangeBtn").addEventListener("click", () => {
+    const f = $("#strangeFrame");
+    document.querySelectorAll("audio").forEach(a => a.pause());
+    if (!f.src) f.src = "/strange"; else f.contentWindow.postMessage("irgen:show", location.origin);
+    f.classList.remove("hide");
+    f.focus();
+  });
+  window.addEventListener("message", e => { if (e.origin === location.origin && e.data === "irgen:standard") $("#strangeFrame").classList.add("hide"); });
   document.addEventListener("keydown", e => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") render(); });
 })();
 </script>

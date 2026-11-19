@@ -21,11 +21,14 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
 PRESETS = ROOT / "presets"
+STRANGE_PRESETS = PRESETS / "strange"
 OUT = ROOT / "renders" / "gui"
 STATIC = Path(__file__).resolve().parent / "gui_static"
 
 _lock = threading.Lock()
 _last = {"ir": None, "fs": None, "name": None}
+_jobs = {"standard": None, "strange": None}   # last render per view: what /api/analyze needs
+_std = {"ir": None, "fs": None, "name": None}   # last standard render (strange spaces can import it)
 
 
 def _safe(name):
@@ -132,8 +135,24 @@ class Handler(BaseHTTPRequestHandler):
         n = int(self.headers.get("Content-Length", 0))
         return json.loads(self.rfile.read(n) or b"{}")
 
+    def _v1(self, method):
+        """IR-set API (irgen.service) mounted next to the GUI."""
+        from . import service
+        u = urlparse(self.path)
+        if not (u.path == "/v1" or u.path.startswith("/v1/")):
+            return False
+        body = self._body() if method == "POST" else None
+        service.send(self, *service.handle(method, u.path, body))
+        return True
+
+    def do_DELETE(self):
+        if not self._v1("DELETE"):
+            self._send(404, {"error": "not found"})
+
     # ---- GET
     def do_GET(self):
+        if self._v1("GET"):
+            return
         u = urlparse(self.path)
         q = parse_qs(u.query)
         try:
@@ -148,6 +167,23 @@ class Handler(BaseHTTPRequestHandler):
             if u.path == "/api/preset":
                 name = _safe(q.get("name", [""])[0])
                 return self._send(200, json.loads((PRESETS / f"{name}.json").read_text()))
+            if u.path in ("/strange", "/strange.html"):
+                return self._send(200, (STATIC / "strange.html").read_bytes(), "text/html; charset=utf-8")
+            if u.path == "/api/strange/meta":
+                from . import strange as st
+                from .acoustics import MATERIALS
+                return self._send(200, {"defaults": st.DEFAULTS, "shapes": st.SHAPES, "media": st.MEDIA,
+                                        "materials": {**{k: v["alpha"] for k, v in st.STRANGE_MATERIALS.items()}, **MATERIALS},
+                                        "strange_materials": list(st.STRANGE_MATERIALS), "scales": list(st.SCALES),
+                                        "walls": {k: [v["rho"], v["c_plate"]] for k, v in st.STRANGE_MATERIALS.items()},
+                                        "presets": sorted(p.stem for p in STRANGE_PRESETS.glob("*.json")),
+                                        "standard": _std["name"]})
+            if u.path == "/api/strange/scales":
+                from .strange import SCALES
+                return self._send(200, {k: [list(v[0]), v[1]] for k, v in SCALES.items()})
+            if u.path == "/api/strange/preset":
+                name = _safe(q.get("name", [""])[0])
+                return self._send(200, json.loads((STRANGE_PRESETS / f"{name}.json").read_text()))
             if u.path.startswith("/files/"):
                 rel = unquote(u.path[len("/files/"):])
                 p = (OUT / rel).resolve()
@@ -161,6 +197,12 @@ class Handler(BaseHTTPRequestHandler):
 
     # ---- POST
     def do_POST(self):
+        if self.path.startswith("/v1"):
+            try:
+                if self._v1("POST"):
+                    return
+            except json.JSONDecodeError as e:
+                return self._send(400, {"error": f"bad JSON: {e}"})
         u = urlparse(self.path)
         try:
             data = self._body()
@@ -169,6 +211,20 @@ class Handler(BaseHTTPRequestHandler):
             if u.path == "/api/save_preset":
                 name = _safe(data.get("name"))
                 path = PRESETS / f"{name}.json"
+                if path.exists() and not data.get("overwrite"):
+                    return self._send(409, {"error": f"preset '{name}' exists", "exists": True})
+                preset = dict(data["preset"])
+                preset["name"] = name
+                path.write_text(json.dumps(preset, indent=2))
+                return self._send(200, {"ok": True, "name": name})
+            if u.path == "/api/analyze":
+                return self._analyze(data.get("kind", "standard"))
+            if u.path == "/api/strange/render":
+                return self._render_strange(data)
+            if u.path == "/api/strange/save_preset":
+                name = _safe(data.get("name"))
+                STRANGE_PRESETS.mkdir(parents=True, exist_ok=True)
+                path = STRANGE_PRESETS / f"{name}.json"
                 if path.exists() and not data.get("overwrite"):
                     return self._send(409, {"error": f"preset '{name}' exists", "exists": True})
                 preset = dict(data["preset"])
@@ -191,11 +247,13 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(429, {"error": "a render is already running"})
         try:
             t0 = time.time()
-            res = render_preset(preset, str(outdir), name, quiet=True)
+            res = render_preset(preset, str(outdir), name, quiet=True, analysis=False)
         finally:
             _lock.release()
         ir, fs = res["ir"], res["fs"]
         _last.update(ir=ir, fs=fs, name=name)
+        _jobs["standard"] = res
+        _std.update(ir=ir, fs=fs, name=name)
         stamp = str(int(time.time() * 1000))
 
         def url(p):
@@ -217,6 +275,77 @@ class Handler(BaseHTTPRequestHandler):
                       "wav_dir": str(Path(files["wav"][0]).parent),
                       "report": url(files.get("report")), "mc_report": url(files.get("mc_report")),
                       "preview": url(outdir / "_preview.wav"), "json": url(files.get("json"))},
+            "envelope": {"hop_s": hop / fs, "db": np.round(np.maximum(env, -120), 1).tolist()},
+        })
+
+    def _analyze(self, kind):
+        """Analysis report(s) of the view's last render, computed only when asked for."""
+        res = _jobs.get(kind)
+        if res is None:
+            return self._send(400, {"error": "render an IR first"})
+        if not _lock.acquire(blocking=False):
+            return self._send(429, {"error": "a render is already running"})
+        try:
+            t0 = time.time()
+            if kind == "strange":
+                from .strange import analyze_strange
+                a = analyze_strange(res["ir"], res["fs"], res["info"], res["cfg"], res["outdir"], res["base"])
+            else:
+                from .cli import analyze_render
+                a = analyze_render(res["ir"], res["fs"], res["info"], res["cfg"], res["outdir"], res["base"])
+        finally:
+            _lock.release()
+        stamp = str(int(time.time() * 1000))
+
+        def url(p):
+            return None if not p else f"/files/{Path(p).resolve().relative_to(OUT.resolve()).as_posix()}?t={stamp}"
+        return self._send(200, {"seconds": round(time.time() - t0, 2), "analysis": a["analysis"],
+                                "multichannel": a.get("multichannel_analysis"), "table": a["table"],
+                                "files": {"report": url(a["report"]), "mc_report": url(a.get("mc_report"))}})
+
+    def _render_strange(self, data):
+        from .strange import render_strange
+        import soundfile as sf
+        preset = data["preset"]
+        name = _safe(data.get("name") or preset.get("name"))
+        imported = None
+        if (preset.get("imported") or {}).get("enabled"):
+            if (preset["imported"].get("source") == "file"):
+                if not data.get("import_b64"):
+                    return self._send(400, {"error": "imported layer: choose an IR file"})
+                x, ifs = sf.read(io.BytesIO(base64.b64decode(data["import_b64"].split(",")[-1])), always_2d=True)
+                imported = (x.T, ifs)
+            else:
+                if _std["ir"] is None:
+                    return self._send(400, {"error": "imported layer: render an IR in the standard view first"})
+                imported = (_std["ir"], _std["fs"])
+        outdir = OUT / "strange" / name
+        if not _lock.acquire(blocking=False):
+            return self._send(429, {"error": "a render is already running"})
+        try:
+            t0 = time.time()
+            res = render_strange(preset, str(outdir), name, imported, analysis=False)
+        finally:
+            _lock.release()
+        ir, fs = res["ir"], res["fs"]
+        _last.update(ir=ir, fs=fs, name=f"strange/{name}")
+        _jobs["strange"] = res
+        stamp = str(int(time.time() * 1000))
+
+        def url(p):
+            return f"/files/{Path(p).resolve().relative_to(OUT.resolve()).as_posix()}?t={stamp}"
+        prev = ir if ir.ndim == 1 else ir[:2].T
+        (outdir / "_preview.wav").write_bytes(_wav_bytes(prev / max(np.max(np.abs(prev)), 1e-9) * 0.89, fs))
+        x = ir if ir.ndim == 1 else ir[0]
+        hop = max(1, int(0.002 * fs))
+        m = (x[: x.size // hop * hop].reshape(-1, hop) ** 2).mean(axis=1)
+        env = 10 * np.log10(m / max(m.max(), 1e-30) + 1e-14)
+        f = res["files"]
+        return self._send(200, {
+            "name": name, "seconds": round(time.time() - t0, 2), "info": res["info"], "analysis": res["analysis"],
+            "table": res["table"], "display": res["display"],
+            "files": {"wav": url(f["wav"]), "wav_path": f["wav"], "report": None, "json": url(f["json"]),
+                      "preview": url(outdir / "_preview.wav")},
             "envelope": {"hop_s": hop / fs, "db": np.round(np.maximum(env, -120), 1).tolist()},
         })
 
@@ -256,6 +385,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def serve(port=8765, open_browser=True):
+    from . import service
+    service.IMPORT_PROVIDER = lambda: None if _std["ir"] is None else (_std["ir"], _std["fs"])
     OUT.mkdir(parents=True, exist_ok=True)
     httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     url = f"http://127.0.0.1:{port}/"

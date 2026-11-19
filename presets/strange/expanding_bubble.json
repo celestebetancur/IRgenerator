@@ -1,0 +1,21 @@
+{
+  "name": "expanding_bubble",
+  "_about": "A soap bubble that keeps inflating while it rings: every mode glides down 1.5 octaves per second and wobbles.",
+  "space": {
+    "shape": "sphere",
+    "radius_m": 0.3,
+    "wall": "mirror",
+    "decay_scale": 0.15
+  },
+  "motion": {
+    "glide_oct_per_s": 1.5,
+    "wobble_cents": 25,
+    "wobble_hz": 0.7
+  },
+  "diffuse": {
+    "gain_db": -12
+  },
+  "output": {
+    "max_length_s": 8
+  }
+}

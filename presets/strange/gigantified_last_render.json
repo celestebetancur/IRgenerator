@@ -1,0 +1,27 @@
+{
+  "name": "gigantified_last_render",
+  "_about": "Takes the last IR rendered in the standard view, plays it 8x slower (8x larger), and imprints a lydian scale on it.",
+  "imported": {
+    "enabled": true,
+    "source": "last_render",
+    "scale": 8,
+    "gain_db": 0
+  },
+  "modes": {
+    "enabled": false
+  },
+  "diffuse": {
+    "enabled": false
+  },
+  "tuning": {
+    "root": "F2",
+    "scale": "lydian"
+  },
+  "imprint": {
+    "gain_db": 10,
+    "q": 45
+  },
+  "direct": {
+    "level_db": -10
+  }
+}

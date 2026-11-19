@@ -1,0 +1,30 @@
+{
+  "name": "dorian_cistern",
+  "_about": "Stone cistern whose modes are pulled onto D dorian.",
+  "space": {
+    "shape": "box",
+    "dimensions": [
+      7,
+      4.5,
+      5
+    ],
+    "wall": "stone"
+  },
+  "tuning": {
+    "mode": "snap",
+    "root": "D2",
+    "scale": "dorian",
+    "amount": 0.9
+  },
+  "modes": {
+    "max_modes": 1200,
+    "detune_cents": 2
+  },
+  "imprint": {
+    "gain_db": 6,
+    "q": 60
+  },
+  "output": {
+    "max_length_s": 12
+  }
+}

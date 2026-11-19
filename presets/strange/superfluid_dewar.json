@@ -1,0 +1,20 @@
+{
+  "name": "superfluid_dewar",
+  "_about": "A steel dewar of superfluid helium: no viscosity, c = 238 m/s, so the modes ring for a long time.",
+  "space": {
+    "shape": "cylinder",
+    "radius_m": 0.25,
+    "length_m": 1.2,
+    "wall": "steel",
+    "medium": "superfluid_helium"
+  },
+  "tuning": {
+    "mode": "snap",
+    "root": "E2",
+    "scale": "lydian",
+    "amount": 0.5
+  },
+  "output": {
+    "max_length_s": 12
+  }
+}

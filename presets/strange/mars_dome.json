@@ -1,0 +1,14 @@
+{
+  "name": "mars_dome",
+  "_about": "A 20 m dome on Mars: thin CO2 atmosphere (c = 240 m/s) that absorbs the highs.",
+  "space": {
+    "shape": "sphere",
+    "radius_m": 20,
+    "wall": "concrete",
+    "medium": "mars_atmosphere"
+  },
+  "echoes": {
+    "enabled": true,
+    "gain_db": -10
+  }
+}

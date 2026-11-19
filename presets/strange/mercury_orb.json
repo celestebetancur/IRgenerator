@@ -1,0 +1,12 @@
+{
+  "name": "mercury_orb",
+  "_about": "A glass sphere of mercury. Mercury is denser than glass, so the glass acts as a soft wall: the pressure-release mode set (zeros of j_l).",
+  "space": {
+    "shape": "sphere",
+    "radius_m": 0.25,
+    "wall": "glass",
+    "medium": "mercury",
+    "scale": 30,
+    "transmission": 0.1
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "bubble_bucket",
+  "_about": "A 30 cm plastic bucket of water with 2% air bubbles. Wood's equation drops c to about 85 m/s, so the bucket rings like a room, with a dead band at the bubbles' Minnaert resonance.",
+  "space": {
+    "shape": "cylinder",
+    "radius_m": 0.15,
+    "length_m": 0.3,
+    "wall": "plastic",
+    "medium": "bubbly_water",
+    "void_fraction": 0.02,
+    "bubble_radius_mm": 1.5
+  }
+}

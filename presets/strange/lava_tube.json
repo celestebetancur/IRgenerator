@@ -1,0 +1,22 @@
+{
+  "name": "lava_tube",
+  "_about": "A 200 m lava tube half-full of molten basalt: c = 2500 m/s, stone walls with almost the same impedance (sound leaks out), so the transmission is lowered to keep it ringing (set it to 1 for the physical, almost anechoic version).",
+  "space": {
+    "shape": "pipe",
+    "radius_m": 4,
+    "length_m": 200,
+    "ends": "half",
+    "wall": "stone",
+    "medium": "lava",
+    "transmission": 0.03,
+    "medium_absorption_scale": 1
+  },
+  "echoes": {
+    "enabled": true,
+    "gain_db": -8,
+    "dispersion": -0.4
+  },
+  "output": {
+    "max_length_s": 10
+  }
+}

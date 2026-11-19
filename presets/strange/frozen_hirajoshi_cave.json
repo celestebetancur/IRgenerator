@@ -1,0 +1,32 @@
+{
+  "name": "frozen_hirajoshi_cave",
+  "_about": "Ice cave held on Hirajoshi chords: a 6 s minimum T60, a slow bloom, gated at 7 s.",
+  "space": {
+    "shape": "box",
+    "dimensions": [
+      14,
+      9,
+      6
+    ],
+    "wall": "ice",
+    "t60_floor_s": 6
+  },
+  "tuning": {
+    "mode": "snap",
+    "root": "E2",
+    "scale": "hirajoshi",
+    "amount": 1.0
+  },
+  "modes": {
+    "max_modes": 1500,
+    "detune_cents": 4
+  },
+  "envelope": {
+    "bloom_ms": 600,
+    "gate_ms": 7000
+  },
+  "imprint": {
+    "gain_db": 9,
+    "q": 80
+  }
+}

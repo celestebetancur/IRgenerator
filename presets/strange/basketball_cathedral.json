@@ -1,0 +1,17 @@
+{
+  "name": "basketball_cathedral",
+  "_about": "The same basketball, 300x larger (36 m radius). The ping drops to ~3 Hz; the ball's focusing echoes come back every 210 ms.",
+  "space": {
+    "shape": "sphere",
+    "radius_m": 0.12,
+    "wall": "rubber",
+    "scale": 300
+  },
+  "echoes": {
+    "enabled": true,
+    "gain_db": -9
+  },
+  "output": {
+    "max_length_s": 14
+  }
+}

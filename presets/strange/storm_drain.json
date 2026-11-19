@@ -1,0 +1,26 @@
+{
+  "name": "storm_drain",
+  "_about": "Concrete pipe 30 m long, both ends open, with dispersive (spring-like) flutter along its axis.",
+  "space": {
+    "shape": "pipe",
+    "radius_m": 0.3,
+    "length_m": 30,
+    "ends": "open",
+    "wall": "concrete",
+    "receiver": [
+      0.5,
+      0.5,
+      0.3
+    ],
+    "source": [
+      0.4,
+      0.5,
+      0.1
+    ]
+  },
+  "echoes": {
+    "enabled": true,
+    "dispersion": 0.9,
+    "gain_db": -3
+  }
+}

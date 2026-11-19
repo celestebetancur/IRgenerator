@@ -1,0 +1,15 @@
+{
+  "name": "helium_shoebox",
+  "_about": "A cardboard shoebox, 20x larger and filled with helium (c = 1007 m/s): modes three times higher than in air.",
+  "space": {
+    "shape": "box",
+    "dimensions": [
+      0.33,
+      0.2,
+      0.12
+    ],
+    "wall": "cardboard",
+    "medium": "helium",
+    "scale": 20
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "reverse_insect_shell",
+  "_about": "Inside a beetle's chitin shell (1.5 cm), 60x larger and played backwards.",
+  "space": {
+    "shape": "sphere",
+    "radius_m": 0.015,
+    "wall": "chitin",
+    "scale": 60,
+    "decay_scale": 4
+  },
+  "shell": {
+    "enabled": true,
+    "thickness_mm": 0.3,
+    "gain_db": -6
+  },
+  "envelope": {
+    "reverse": true
+  }
+}

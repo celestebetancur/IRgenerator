@@ -1,0 +1,17 @@
+{
+  "name": "ping_pong_planetarium",
+  "_about": "A ping-pong ball (r = 2 cm) enlarged 1500x into a 30 m dome. Every mode moves down 1500x.",
+  "space": {
+    "shape": "sphere",
+    "radius_m": 0.02,
+    "wall": "plastic",
+    "scale": 1500
+  },
+  "echoes": {
+    "enabled": true,
+    "gain_db": -12
+  },
+  "output": {
+    "max_length_s": 16
+  }
+}

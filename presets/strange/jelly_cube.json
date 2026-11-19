@@ -1,0 +1,23 @@
+{
+  "name": "jelly_cube",
+  "_about": "A 1 m cube of gelatin in a glass tank. Tissue-like absorption (rising with frequency), scaled 25x into a wobbling, dark hall.",
+  "space": {
+    "shape": "box",
+    "dimensions": [
+      1,
+      1,
+      1
+    ],
+    "wall": "glass",
+    "medium": "jelly",
+    "scale": 25,
+    "transmission": 0.3
+  },
+  "motion": {
+    "wobble_cents": 18,
+    "wobble_hz": 2.5
+  },
+  "output": {
+    "max_length_s": 10
+  }
+}

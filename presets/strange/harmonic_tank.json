@@ -1,0 +1,33 @@
+{
+  "name": "harmonic_tank",
+  "_about": "Steel tank: harmonic series on C1, partials stretched like a bell.",
+  "space": {
+    "shape": "box",
+    "dimensions": [
+      3,
+      2,
+      2
+    ],
+    "wall": "steel"
+  },
+  "tuning": {
+    "mode": "add",
+    "root": "C1",
+    "scale": "harmonic_series",
+    "range_hz": [
+      30,
+      3000
+    ],
+    "partials": 4,
+    "inharmonicity": 0.03,
+    "ring_s": 9
+  },
+  "shell": {
+    "enabled": true,
+    "thickness_mm": 6,
+    "gain_db": -12
+  },
+  "output": {
+    "max_length_s": 14
+  }
+}

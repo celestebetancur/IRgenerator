@@ -1,0 +1,37 @@
+{
+  "name": "bohlen_pierce_orb",
+  "_about": "Glass orb that rings only on the Bohlen-Pierce scale (13 steps per 3:1 tritave).",
+  "space": {
+    "shape": "sphere",
+    "radius_m": 0.4,
+    "wall": "glass"
+  },
+  "tuning": {
+    "mode": "replace",
+    "root": "C3",
+    "scale": "bohlen_pierce",
+    "range_hz": [
+      60,
+      6000
+    ],
+    "partials": 2,
+    "ring_s": 6,
+    "inharmonicity": 0.0
+  },
+  "diffuse": {
+    "enabled": true,
+    "gain_db": -18,
+    "range": "full"
+  },
+  "shell": {
+    "enabled": true,
+    "gain_db": -14
+  },
+  "imprint": {
+    "gain_db": 6,
+    "q": 50
+  },
+  "output": {
+    "max_length_s": 10
+  }
+}

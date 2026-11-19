@@ -1,0 +1,14 @@
+{
+  "name": "honey_jar_hall",
+  "_about": "A glass jar of honey (viscous, c = 2030 m/s) scaled 120x.",
+  "space": {
+    "shape": "cylinder",
+    "radius_m": 0.045,
+    "length_m": 0.12,
+    "wall": "glass",
+    "medium": "honey",
+    "scale": 120,
+    "transmission": 0.12,
+    "medium_absorption_scale": 5
+  }
+}

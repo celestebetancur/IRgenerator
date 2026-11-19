@@ -1,0 +1,9 @@
+{
+  "name": "inside_a_basketball",
+  "_about": "A real basketball: rubber sphere, r = 12 cm. The ~950 Hz ping is its lowest cavity mode.",
+  "space": {
+    "shape": "sphere",
+    "radius_m": 0.12,
+    "wall": "rubber"
+  }
+}
