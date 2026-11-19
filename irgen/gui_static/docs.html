@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>irgen Docs</title>
+<style>
+:root{
+  --bg:#141218; --panel:#1d1a23; --panel2:#262230; --line:#363042; --text:#ebe7f2; --muted:#9a93a8;
+  --accent:#b98cff; --accent2:#ff7ad9; --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.6 var(--font)}
+header{position:sticky;top:0;z-index:2;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+header h1{font-size:15px;margin:0;font-weight:650}
+header h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sp{flex:1}
+.toggle{display:flex;gap:2px;background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:2px}
+.toggle button{font:inherit;border:none;background:none;color:var(--muted);padding:4px 10px;cursor:pointer;border-radius:5px}
+.toggle button.on{background:var(--accent);color:#170c26}
+input[type=search]{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:4px 8px;width:200px;max-width:100%}
+.wrap{display:grid;grid-template-columns:220px minmax(0,1fr);max-width:1100px;margin:0 auto}
+nav{position:sticky;top:53px;align-self:start;max-height:calc(100vh - 53px);overflow:auto;padding:16px 12px;border-right:1px solid var(--line)}
+nav a{display:block;color:var(--muted);text-decoration:none;padding:3px 6px;border-radius:5px;font-size:13px}
+nav a:hover{color:var(--text);background:var(--panel2)}
+main{padding:16px 24px 80px;min-width:0}
+@media (max-width:800px){.wrap{grid-template-columns:1fr} nav{display:none} main{padding:12px 16px 60px}}
+h2{margin:34px 0 8px;font-size:20px;color:var(--accent)}
+h2:first-child{margin-top:8px}
+.intro{color:var(--text)}
+.param{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:10px 0;scroll-margin-top:70px}
+.param h3{margin:0;font-size:15px;display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.param h3 code{font-size:11.5px;color:var(--muted);font-weight:400}
+.short{color:var(--muted);margin:4px 0}
+.lvl{margin:6px 0 0;padding-left:10px;border-left:3px solid var(--line)}
+.lvl .lab{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:block}
+.lvl-b{border-color:var(--accent2)} .lvl-d{border-color:var(--accent)}
+body.level-b .lvl-d, body.level-d .lvl-b{display:none}
+.flash{outline:2px solid var(--accent2);outline-offset:2px;transition:outline-color 1.5s}
+.hide{display:none!important}
+sub,sup{line-height:0}
+</style>
+</head>
+<body class="level-b">
+<header>
+  <h1 id="title">irgen: documentation</h1>
+  <a id="other" style="color:var(--accent);font-size:12.5px;text-decoration:none"></a>
+  <div class="toggle" id="lvl"><button data-l="b" class="on">Basics</button><button data-l="d">In depth</button><button data-l="both">Both</button></div>
+  <span class="sp"></span>
+  <input type="search" id="q" placeholder="search parameters…" aria-label="search parameters">
+</header>
+<div class="wrap"><nav id="toc"></nav><main id="doc"></main></div>
+<script>
+"use strict";
+// one page for both views: /docs (standard) and /strange/docs (strange spaces)
+const STRANGE = location.pathname.startsWith("/strange");
+document.write(`<script src="/static/${STRANGE ? "strange" : "standard"}_help.js"><\/script>`);
+</script>
+<script>
+"use strict";
+const H = window.IRGEN_HELP, $ = s => document.querySelector(s);
+$("#title").innerHTML = STRANGE ? 'irgen <span>✦ strange spaces</span>: documentation' : 'irgen <span>standard view</span>: documentation';
+Object.assign($("#other"), {href: STRANGE ? "/docs" : "/strange/docs", textContent: STRANGE ? "Standard view docs →" : "Strange spaces docs →"});
+if (!STRANGE) document.documentElement.style.cssText = "--accent:#5fb3ff;--accent2:#7ee0b5";
+function el(tag, attrs={}, html){ const e = document.createElement(tag); for (const [k,v] of Object.entries(attrs)) e.setAttribute(k, v); if (html != null) e.innerHTML = html; return e; }
+function block(key, p){
+  const d = el("div",{class:"param", id:"p-"+key, "data-search":(p.t + " " + key + " " + p.s).toLowerCase()});
+  d.append(el("h3",{}, `${p.t} <code>${key}</code>`), el("p",{class:"short"}, p.s));
+  if (p.b) d.append(el("div",{class:"lvl lvl-b", id:"b-"+key}, `<span class="lab">Basics</span>${p.b}`));
+  if (p.d) d.append(el("div",{class:"lvl lvl-d", id:"d-"+key}, `<span class="lab">In depth</span>${p.d}`));
+  return d;
+}
+const doc = $("#doc"), toc = $("#toc");
+H.sections.forEach(s => {
+  const sec = el("section",{id:"s-"+s.id});
+  sec.append(el("h2",{id:"p-section."+s.id}, s.title),
+             el("div",{class:"lvl lvl-b intro", id:"b-section."+s.id}, `<span class="lab">Basics</span>${s.b}`),
+             el("div",{class:"lvl lvl-d intro", id:"d-section."+s.id}, `<span class="lab">In depth</span>${s.d}`));
+  s.params.forEach(k => sec.append(block(k, H.params[k])));
+  doc.append(sec); toc.append(el("a",{href:"#p-section."+s.id}, s.title));
+});
+const ui = el("section",{id:"s-ui"}); ui.append(el("h2",{}, "Interface"));
+Object.keys(H.params).filter(k => k.startsWith("ui.")).forEach(k => ui.append(block(k, H.params[k])));
+doc.append(ui); toc.append(el("a",{href:"#s-ui"}, "Interface"));
+
+function setLevel(l){ document.body.className = "level-" + l; document.querySelectorAll("#lvl button").forEach(b => b.classList.toggle("on", b.dataset.l === l)); }
+document.querySelectorAll("#lvl button").forEach(b => b.addEventListener("click", () => setLevel(b.dataset.l)));
+$("#q").addEventListener("input", e => {
+  const q = e.target.value.trim().toLowerCase();
+  document.querySelectorAll(".param").forEach(p => p.classList.toggle("hide", !!q && !p.dataset.search.includes(q)));
+});
+function goHash(){
+  const h = decodeURIComponent(location.hash.slice(1)); if (!h) return;
+  if (h.startsWith("d-")) setLevel(document.body.className === "level-both" ? "both" : "d");
+  else if (h.startsWith("b-")) setLevel(document.body.className === "level-both" ? "both" : "b");
+  const t = document.getElementById(h); if (!t) return;
+  const box = t.closest(".param") || t;
+  window.scrollTo(0, box.getBoundingClientRect().top + scrollY - $("header").offsetHeight - 10);   // the sticky header wraps on narrow screens
+  box.classList.add("flash"); setTimeout(() => box.classList.remove("flash"), 1600);
+}
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+window.addEventListener("hashchange", goHash); goHash();
+window.addEventListener("load", () => setTimeout(goHash, 0));   // after the browser's own anchor jump
+</script>
+</body>
+</html>

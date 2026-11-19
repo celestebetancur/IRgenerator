@@ -1,0 +1,174 @@
+{
+  "info": {
+    "name": "reverse_insect_shell",
+    "sample_rate": 48000,
+    "channels": 2,
+    "shape": "sphere",
+    "scale": 60.0,
+    "size_m": [
+      0.9
+    ],
+    "volume_m3": 3.0536280592892777,
+    "surface_m2": 10.178760197630927,
+    "speed_of_sound": 343.0,
+    "medium": "air",
+    "medium_density": 1.204,
+    "boundary": "rigid",
+    "impedance_ratio": 7869.7829,
+    "wall_reflection": 0.9997,
+    "source_receiver_m": 0.7476,
+    "t60_bands": {
+      "63.0": 3.767,
+      "125.0": 3.76,
+      "250.0": 3.743,
+      "500.0": 3.715,
+      "1000.0": 3.061,
+      "2000.0": 2.992,
+      "4000.0": 2.394,
+      "8000.0": 1.719,
+      "16000.0": 0.991
+    },
+    "mixing_time_ms": 18.0,
+    "cavity_modes": 600,
+    "lowest_cavity_mode_hz": 126.26,
+    "modal_crossover_hz": 4137.4,
+    "lowest_mode_hz": 126.26,
+    "shell_f11_hz": 24.06,
+    "shell_modes": 60,
+    "length_s": 8.180104166666666,
+    "synth_modes": 600,
+    "normalize_gain_db": -120.01,
+    "direct_index": 48,
+    "render_seconds": 1.47
+  },
+  "resolved_preset": {
+    "name": "reverse_insect_shell",
+    "seed": 1,
+    "output": {
+      "sample_rate": 48000,
+      "channels": 2,
+      "width": 0.7,
+      "length_s": "auto",
+      "max_length_s": 20,
+      "trim_db": 80,
+      "lead_ms": 1,
+      "fade_out_ms": 60,
+      "dc_highpass_hz": 15,
+      "normalize": "peak",
+      "peak_dbfs": -1,
+      "format": "PCM_24",
+      "dither": true
+    },
+    "space": {
+      "shape": "sphere",
+      "radius_m": 0.015,
+      "length_m": 0.3,
+      "dimensions": [
+        0.33,
+        0.2,
+        0.12
+      ],
+      "ends": "closed",
+      "neck_length_m": 0.08,
+      "neck_radius_m": 0.01,
+      "scale": 60,
+      "medium": "air",
+      "speed_of_sound": "auto",
+      "medium_absorption_scale": 1,
+      "void_fraction": 0.01,
+      "bubble_radius_mm": 1,
+      "boundary": "auto",
+      "wall_thickness_mm": "auto",
+      "transmission": 1,
+      "wall": "chitin",
+      "source": [
+        0.3,
+        0.4,
+        0.55
+      ],
+      "receiver": [
+        0.65,
+        0.6,
+        0.45
+      ],
+      "t60": "auto",
+      "decay_scale": 4,
+      "t60_floor_s": 0
+    },
+    "modes": {
+      "enabled": true,
+      "gain_db": 0,
+      "max_modes": 600,
+      "f_max_hz": "auto",
+      "detune_cents": 0
+    },
+    "tuning": {
+      "mode": "off",
+      "root": "A2",
+      "scale": "minor_pentatonic",
+      "custom_cents": [
+        0,
+        200,
+        350,
+        700,
+        950
+      ],
+      "custom_period_cents": 1200,
+      "amount": 1,
+      "range_hz": [
+        40,
+        8000
+      ],
+      "partials": 3,
+      "inharmonicity": 0,
+      "tilt_db_per_oct": -3,
+      "ring_s": "auto",
+      "root_emphasis_db": 3
+    },
+    "diffuse": {
+      "enabled": true,
+      "gain_db": 0,
+      "range": "above_modes"
+    },
+    "echoes": {
+      "enabled": false,
+      "period": "auto",
+      "period_ms": 25,
+      "dispersion": 0,
+      "gain_db": -6
+    },
+    "shell": {
+      "enabled": true,
+      "material": "auto",
+      "thickness_mm": 0.3,
+      "f0_hz": "auto",
+      "count": 60,
+      "gain_db": -6
+    },
+    "motion": {
+      "glide_oct_per_s": 0,
+      "wobble_cents": 0,
+      "wobble_hz": 0.3
+    },
+    "imprint": {
+      "gain_db": 0,
+      "q": 40
+    },
+    "envelope": {
+      "bloom_ms": 0,
+      "gate_ms": 0,
+      "reverse": true
+    },
+    "imported": {
+      "enabled": false,
+      "source": "last_render",
+      "scale": 1,
+      "gain_db": 0
+    },
+    "direct": {
+      "enabled": true,
+      "level_db": -6
+    },
+    "eq": []
+  }
+}

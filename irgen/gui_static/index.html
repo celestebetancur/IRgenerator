@@ -78,27 +78,29 @@ canvas{width:100%;height:120px;background:var(--panel);border:1px solid var(--li
 <body>
 <header>
   <h1>irgen</h1>
-  <select id="presetSel" title="load preset"></select>
+  <select id="presetSel" title="load preset" data-help="ui.presets"></select>
   <input id="nameIn" type="text" placeholder="name" style="width:170px">
-  <button id="saveBtn">Save preset</button>
-  <div class="toggle" id="modeToggle" title="sets early/late sources">
+  <button id="saveBtn" data-help="ui.save">Save preset</button>
+  <div class="toggle" id="modeToggle" title="sets early/late sources" data-help="ui.mode">
     <button data-m="physical">Physical</button><button data-m="hybrid">Hybrid</button><button data-m="perceptual">Perceptual</button>
   </div>
-  <button id="strangeBtn" title="open the strange-spaces layer: bizarre, miniature, gigantified and scale-tuned IRs">✦ Strange spaces</button>
+  <div class="toggle" id="viewToggle" data-help="ui.view" title="simple view: only the parameters with the biggest audible effect"><button data-v="full">Full</button><button data-v="simple">Simple</button></div>
+  <button id="helpBtn" title="help mode: point at any control to see what it does (Esc to exit)" data-help="ui.help">? Help</button>
+  <button id="strangeBtn" data-help="ui.strange" title="open the strange-spaces layer: bizarre, miniature, gigantified and scale-tuned IRs">✦ Strange spaces</button>
   <span class="sp"></span>
   <span id="status">ready</span>
-  <button class="primary" id="renderBtn">Render ▸</button>
+  <button class="primary" id="renderBtn" data-help="ui.render">Render ▸</button>
 </header>
 <div class="wrap">
 <aside id="side"></aside>
 <main>
-  <canvas id="envc" width="1200" height="120"></canvas>
-  <div class="cards" id="cards"></div>
+  <canvas id="envc" width="1200" height="120" data-help="ui.envelope"></canvas>
+  <div class="cards" id="cards" data-help="ui.cards"></div>
   <div class="audio">
     <span class="hint" style="margin:0">IR preview</span><audio id="prevAudio" controls></audio>
     <span id="dlinfo" class="hint" style="margin:0"></span>
   </div>
-  <div class="card" style="margin:8px 0">
+  <div class="card" style="margin:8px 0" data-help="ui.audition">
     <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
       <b>Audition</b>
       <select id="drySel"><option value="drums">drums</option><option value="plucks">plucks</option><option value="voice">voice-like</option><option value="clicks">clicks</option><option value="file">your file…</option></select>
@@ -109,10 +111,10 @@ canvas{width:100%;height:120px;background:var(--panel);border:1px solid var(--li
       <audio id="audAudio" controls></audio>
     </div>
   </div>
-  <div class="tabs" id="tabs">
+  <div class="tabs" id="tabs" data-help="ui.tabs">
     <button data-t="rep" class="on">Report</button><button data-t="mc">Multichannel</button><button data-t="met">Metrics</button><button data-t="json">Preset JSON</button>
   </div>
-  <div style="display:flex;gap:8px;align-items:center;margin:0 0 8px"><button id="anaBtn" title="ISO 3382 analysis and report of the last render (only computed on request)">Analyze ▸</button><span class="hint" style="margin:0">analysis runs on request (renders stay fast)</span></div>
+  <div style="display:flex;gap:8px;align-items:center;margin:0 0 8px"><button id="anaBtn" data-help="ui.analyze" title="ISO 3382 analysis and report of the last render (only computed on request)">Analyze ▸</button><span class="hint" style="margin:0">analysis runs on request (renders stay fast)</span></div>
   <div class="pane on" id="p-rep"><img id="repImg" alt=""><div class="hint" id="repHint">Render, then press Analyze for the report.</div></div>
   <div class="pane" id="p-mc"><div id="mcBadges"></div><img id="mcImg" alt=""><div class="hint" id="mcHint">Set Multichannel → channels &gt; 1.</div></div>
   <div class="pane" id="p-met"><pre id="metPre">—</pre><pre id="infoPre"></pre></div>
@@ -125,6 +127,9 @@ canvas{width:100%;height:120px;background:var(--panel);border:1px solid var(--li
 </div>
 <iframe id="strangeFrame" class="hide" title="strange spaces" style="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:50;background:#141218"></iframe>
 
+<script src="/static/standard_help.js"></script>
+<script src="/static/help_mode.js"></script>
+<script src="/static/simple_view.js"></script>
 <script>
 "use strict";
 let META = null, S = null, LAST = null;
@@ -143,7 +148,7 @@ function row(label, ...ctl){ return el("div",{class:"row"}, el("label",{}, label
 function changed(){ syncJson(); updateVisibility(); drawPlan(); }
 
 function num(path, {min=0,max=1,step=0.01,log=false,unit="",auto=false,int=false}={}){
-  const rng = el("input",{type:"range",min:log?Math.log10(min):min,max:log?Math.log10(max):max,step:log?0.001:step});
+  const rng = el("input",{"data-path":path,type:"range",min:log?Math.log10(min):min,max:log?Math.log10(max):max,step:log?0.001:step});
   const box = el("input",{type:"number",step:step,min:min,max:max});
   let ab = null;
   const toR = v => log ? Math.log10(Math.max(v,min)) : v;
@@ -157,14 +162,14 @@ function num(path, {min=0,max=1,step=0.01,log=false,unit="",auto=false,int=false
   return parts;
 }
 function sel(path, options, {onchange}={}){
-  const s = el("select",{});
+  const s = el("select",{"data-path":path});
   options.forEach(o => { const [v,l] = Array.isArray(o) ? o : [o,o]; s.append(el("option",{value:JSON.stringify(v)}, String(l))); });
   s.addEventListener("change", () => { setP(S,path,JSON.parse(s.value)); onchange && onchange(); refreshAll(); changed(); });
   binders.push(() => { const v = JSON.stringify(getP(S,path)); if ([...s.options].some(o => o.value === v)) s.value = v; });
   return s;
 }
 function chk(path, label=""){
-  const c = el("input",{type:"checkbox"});
+  const c = el("input",{type:"checkbox","data-path":path});
   c.addEventListener("change", () => { setP(S,path,c.checked); refreshAll(); changed(); });
   binders.push(() => { c.checked = !!getP(S,path); });
   return label ? el("label",{style:"display:flex;gap:5px;align-items:center"}, c, label) : c;
@@ -172,11 +177,11 @@ function chk(path, label=""){
 function xyz(path){
   const ins = [0,1,2].map(i => { const e = el("input",{type:"number",step:"0.05"}); e.addEventListener("change", () => { const a = clone(getP(S,path) || [0,0,0]); a[i] = parseFloat(e.value)||0; setP(S,path,a); changed(); }); return e; });
   binders.push(() => { const a = getP(S,path) || [0,0,0]; ins.forEach((e,i) => e.value = a[i]); });
-  return el("div",{class:"xyz"}, ...ins);
+  return el("div",{class:"xyz","data-path":path}, ...ins);
 }
 /* nine octave sliders writing an array (or null when disabled) */
 function octave(path, {min, max, log=false, unit="", def, enableLabel, decimals=2}){
-  const wrap = el("div",{});
+  const wrap = el("div",{"data-help":path});
   const en = el("input",{type:"checkbox"});
   const grid = el("div",{class:"oct"});
   const sl = [], vs = [];
@@ -201,7 +206,7 @@ function octave(path, {min, max, log=false, unit="", def, enableLabel, decimals=
   return wrap;
 }
 function eqEditor(path){
-  const box = el("div",{});
+  const box = el("div",{"data-help":path});
   const draw = () => {
     box.innerHTML = "";
     (getP(S,path)||[]).forEach((b,i) => {
@@ -221,13 +226,13 @@ function eqEditor(path){
   binders.push(draw);
   return box;
 }
-function section(title, tag, open, ...content){ const d = el("details", open ? {open:""} : {}); d.append(el("summary",{}, title, tag ? el("span",{class:"tag", id:"tag-"+tag}, "") : ""), el("div",{class:"sec"}, ...content)); return d; }
+function section(title, tag, open, ...content){ const d = el("details", open ? {open:""} : {}); d.append(el("summary",{"data-help":"section."+tag}, title, tag ? el("span",{class:"tag", id:"tag-"+tag}, "") : ""), el("div",{class:"sec"}, ...content)); return d; }
 
 /* ------------------------------------------------------------------ room plan (drag source / receiver) */
 let plan;
 function makePlan(){
   plan = document.createElementNS("http://www.w3.org/2000/svg","svg");
-  plan.setAttribute("class","plan"); plan.setAttribute("viewBox","0 0 400 260");
+  plan.setAttribute("class","plan"); plan.setAttribute("viewBox","0 0 400 260"); plan.dataset.help = "ui.plan";
   let drag = null;
   plan.addEventListener("pointerdown", e => { const t = e.target.dataset.who; if (t){ drag = t; plan.setPointerCapture(e.pointerId); } });
   plan.addEventListener("pointermove", e => {
@@ -285,7 +290,7 @@ function build(){
     row("Seed", ...num("seed",{min:0,max:9999,step:1,int:true}))
   ));
 
-  const matGrid = el("div",{class:"mats"});
+  const matGrid = el("div",{class:"mats","data-help":"room.materials"});
   SURF.forEach(s => {
     const m = el("select",{}); m.append(el("option",{value:""},"(default)")); mats.forEach(x => m.append(el("option",{value:x},x)));
     m.addEventListener("change", () => { const M = getP(S,"room.materials"); if (typeof M !== "object" || Array.isArray(M)) setP(S,"room.materials",{default:"plaster"}); if (m.value) S.room.materials[s] = m.value; else delete S.room.materials[s]; changed(); });
@@ -384,7 +389,7 @@ function build(){
       const upd = () => { const a = +f1.value||0, b = Math.max(+f2.value||0, a*1.5); if (a > 0) setP(S,"multichannel.coherence.coherent_blend",{freqs:[a,b],values:[1,0]}); else delete S.multichannel.coherence.coherent_blend; changed(); };
       f1.addEventListener("change",upd); f2.addEventListener("change",upd);
       binders.push(() => { const b = getP(S,"multichannel.coherence.coherent_blend"); if (b && b.freqs){ f1.value = b.freqs[0]; f2.value = b.freqs[1]; } else { f1.value = 0; f2.value = 200; } });
-      return el("span",{style:"display:flex;gap:4px;align-items:center"}, f1, el("span",{class:"hint",style:"margin:0"},"→"), f2, el("span",{class:"hint",style:"margin:0"},"Hz"));
+      return el("span",{style:"display:flex;gap:4px;align-items:center","data-path":"multichannel.coherence.coherent_blend"}, f1, el("span",{class:"hint",style:"margin:0"},"→"), f2, el("span",{class:"hint",style:"margin:0"},"Hz"));
     })()),
     row("Mic array", sel("multichannel.array.type", ["none","line","circle","sphere","grid","random"])),
     row("Spacing", ...num("multichannel.array.spacing_m",{min:0.01,max:3,step:0.01,unit:"m"})),
@@ -551,6 +556,11 @@ async function refreshPresetList(selName){
     refreshAll(); changed();
   }));
   window.addEventListener("resize", () => LAST && drawEnv(LAST.envelope));
+  IrgenHelpMode({help: window.IRGEN_HELP, button: $("#helpBtn"), docs: "/docs", status});
+  // simple view: the parameters with the most dramatic audible effect
+  IrgenSimpleView({toggle: $("#viewToggle"), panel: $("#side"), keys: [
+    "ui.plan", "room.dimensions", "room.materials", "late.t60_scale", "late.drr_db", "early.gain_db",
+    "early.parametric.start_ms", "late.attack_ms", "multichannel.channels"]});
   // strange-spaces layer: separate page in an overlay, so this page's state stays intact
   $("#strangeBtn").addEventListener("click", () => {
     const f = $("#strangeFrame");

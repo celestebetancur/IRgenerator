@@ -1,0 +1,177 @@
+{
+  "info": {
+    "name": "bohlen_pierce_orb",
+    "sample_rate": 48000,
+    "channels": 2,
+    "shape": "sphere",
+    "scale": 1.0,
+    "size_m": [
+      0.4
+    ],
+    "volume_m3": 0.26808257310632905,
+    "surface_m2": 2.0106192982974678,
+    "speed_of_sound": 343.0,
+    "medium": "air",
+    "medium_density": 1.204,
+    "boundary": "rigid",
+    "impedance_ratio": 32084.4997,
+    "wall_reflection": 0.9999,
+    "source_receiver_m": 0.3323,
+    "t60_bands": {
+      "63.0": 0.705,
+      "125.0": 0.704,
+      "250.0": 0.843,
+      "500.0": 1.046,
+      "1000.0": 1.034,
+      "2000.0": 1.003,
+      "4000.0": 0.901,
+      "8000.0": 0.562,
+      "16000.0": 0.286
+    },
+    "mixing_time_ms": 14.7,
+    "cavity_modes": 600,
+    "lowest_cavity_mode_hz": 284.084,
+    "modal_crossover_hz": 9309.2,
+    "tonal_modes": 110,
+    "lowest_mode_hz": 61.141,
+    "shell_f11_hz": 28.69,
+    "shell_modes": 60,
+    "length_s": 10.0,
+    "synth_modes": 110,
+    "imprint_peaks": 55,
+    "normalize_gain_db": -127.62,
+    "direct_index": 48,
+    "root_hz": 130.813,
+    "render_seconds": 1.54
+  },
+  "resolved_preset": {
+    "name": "bohlen_pierce_orb",
+    "seed": 1,
+    "output": {
+      "sample_rate": 48000,
+      "channels": 2,
+      "width": 0.7,
+      "length_s": "auto",
+      "max_length_s": 10,
+      "trim_db": 80,
+      "lead_ms": 1,
+      "fade_out_ms": 60,
+      "dc_highpass_hz": 15,
+      "normalize": "peak",
+      "peak_dbfs": -1,
+      "format": "PCM_24",
+      "dither": true
+    },
+    "space": {
+      "shape": "sphere",
+      "radius_m": 0.4,
+      "length_m": 0.3,
+      "dimensions": [
+        0.33,
+        0.2,
+        0.12
+      ],
+      "ends": "closed",
+      "neck_length_m": 0.08,
+      "neck_radius_m": 0.01,
+      "scale": 1,
+      "medium": "air",
+      "speed_of_sound": "auto",
+      "medium_absorption_scale": 1,
+      "void_fraction": 0.01,
+      "bubble_radius_mm": 1,
+      "boundary": "auto",
+      "wall_thickness_mm": "auto",
+      "transmission": 1,
+      "wall": "glass",
+      "source": [
+        0.3,
+        0.4,
+        0.55
+      ],
+      "receiver": [
+        0.65,
+        0.6,
+        0.45
+      ],
+      "t60": "auto",
+      "decay_scale": 1,
+      "t60_floor_s": 0
+    },
+    "modes": {
+      "enabled": true,
+      "gain_db": 0,
+      "max_modes": 600,
+      "f_max_hz": "auto",
+      "detune_cents": 0
+    },
+    "tuning": {
+      "mode": "replace",
+      "root": "C3",
+      "scale": "bohlen_pierce",
+      "custom_cents": [
+        0,
+        200,
+        350,
+        700,
+        950
+      ],
+      "custom_period_cents": 1200,
+      "amount": 1,
+      "range_hz": [
+        60,
+        6000
+      ],
+      "partials": 2,
+      "inharmonicity": 0,
+      "tilt_db_per_oct": -3,
+      "ring_s": 6,
+      "root_emphasis_db": 3
+    },
+    "diffuse": {
+      "enabled": true,
+      "gain_db": -18,
+      "range": "full"
+    },
+    "echoes": {
+      "enabled": false,
+      "period": "auto",
+      "period_ms": 25,
+      "dispersion": 0,
+      "gain_db": -6
+    },
+    "shell": {
+      "enabled": true,
+      "material": "auto",
+      "thickness_mm": 2,
+      "f0_hz": "auto",
+      "count": 60,
+      "gain_db": -14
+    },
+    "motion": {
+      "glide_oct_per_s": 0,
+      "wobble_cents": 0,
+      "wobble_hz": 0.3
+    },
+    "imprint": {
+      "gain_db": 6,
+      "q": 50
+    },
+    "envelope": {
+      "bloom_ms": 0,
+      "gate_ms": 0,
+      "reverse": false
+    },
+    "imported": {
+      "enabled": false,
+      "source": "last_render",
+      "scale": 1,
+      "gain_db": 0
+    },
+    "direct": {
+      "enabled": true,
+      "level_db": -6
+    },
+    "eq": []
+  }
+}

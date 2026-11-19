@@ -167,6 +167,14 @@ class Handler(BaseHTTPRequestHandler):
             if u.path == "/api/preset":
                 name = _safe(q.get("name", [""])[0])
                 return self._send(200, json.loads((PRESETS / f"{name}.json").read_text()))
+            if u.path in ("/docs", "/strange/docs"):
+                return self._send(200, (STATIC / "docs.html").read_bytes(), "text/html; charset=utf-8")
+            if u.path.startswith("/static/"):
+                fn = u.path[len("/static/"):]
+                if re.fullmatch(r"[A-Za-z0-9_\-]+\.(js|css)", fn) and (STATIC / fn).is_file():
+                    ctype = "text/javascript; charset=utf-8" if fn.endswith(".js") else "text/css; charset=utf-8"
+                    return self._send(200, (STATIC / fn).read_bytes(), ctype)
+                return self._send(404, {"error": "not found"})
             if u.path in ("/strange", "/strange.html"):
                 return self._send(200, (STATIC / "strange.html").read_bytes(), "text/html; charset=utf-8")
             if u.path == "/api/strange/meta":

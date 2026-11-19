@@ -79,48 +79,51 @@ canvas{width:100%;background:var(--panel);border:1px solid var(--line);border-ra
 </head>
 <body>
 <header>
-  <button id="backBtn" class="ghost" title="back to the standard IR generator">← Standard</button>
+  <button id="backBtn" class="ghost" title="back to the standard IR generator" data-help="ui.back">← Standard</button>
   <h1>irgen <span>✦ strange spaces</span></h1>
-  <select id="presetSel" title="load preset"></select>
+  <select id="presetSel" title="load preset" data-help="ui.presets"></select>
   <input id="nameIn" type="text" placeholder="name" style="width:170px">
-  <button id="saveBtn">Save preset</button>
-  <button id="mutateBtn" title="randomise the space: shape, size, medium, material, tuning, motion">🎲 Mutate</button>
+  <button id="saveBtn" data-help="ui.save">Save preset</button>
+  <button id="mutateBtn" data-help="ui.mutate" title="randomise the space: shape, size, medium, material, tuning, motion">🎲 Mutate</button>
+  <div class="toggle" id="viewToggle" data-help="ui.view" title="simple view: only the parameters with the biggest audible effect"><button data-v="full">Full</button><button data-v="simple">Simple</button></div>
+  <button id="helpBtn" title="help mode: point at any control to see what it does (Esc to exit)" data-help="ui.help">? Help</button>
   <span class="sp"></span>
   <span id="status">ready</span>
-  <button class="primary" id="renderBtn">Render ▸</button>
+  <button class="primary" id="renderBtn" data-help="ui.render">Render ▸</button>
 </header>
 <div class="wrap">
 <aside id="side"></aside>
 <main>
   <div id="aboutBox" class="about hide"></div>
-  <canvas id="envc"></canvas>
-  <div class="maphead"><b>Resonance map</b>
+  <canvas id="envc" data-help="ui.envelope"></canvas>
+  <div class="maphead" data-help="ui.map"><b>Resonance map</b>
     <span><span class="dot" style="background:#b98cff"></span>cavity modes</span>
     <span><span class="dot" style="background:#ff7ad9"></span>tonal modes</span>
     <span><span class="dot" style="background:#7ee0b5"></span>shell modes</span>
     <span><span class="dot" style="background:#ffb35f"></span>Helmholtz</span>
     <span><span class="dot" style="background:#5a4d70"></span>scale pitches</span>
     <span>height = energy (amplitude² × T60)</span></div>
-  <canvas id="mapc"></canvas>
+  <canvas id="mapc" data-help="ui.map"></canvas>
   <div class="cards" id="cards"></div>
   <div class="audio">
     <span class="hint" style="margin:0">IR preview</span><audio id="prevAudio" controls></audio>
     <span id="dlinfo" class="hint" style="margin:0"></span>
   </div>
-  <div class="card" style="margin:8px 0">
+  <div class="card" style="margin:8px 0" data-help="ui.audition">
     <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
       <b>Audition</b>
       <select id="drySel"><option value="plucks">plucks</option><option value="drums">drums</option><option value="voice">voice-like</option><option value="clicks">clicks</option><option value="file">your file…</option></select>
       <input type="file" id="dryFile" accept="audio/*" class="hide">
       <label class="hint" style="margin:0">wet</label><input type="range" id="wetIn" min="0" max="1" step="0.01" value="0.6" style="width:110px">
+      <span id="lrBox" class="hide"><label class="hint" style="margin:0">L ch</label><input type="number" id="lCh" value="1" min="1" max="64" style="width:52px"><label class="hint" style="margin:0">R ch</label><input type="number" id="rCh" value="2" min="1" max="64" style="width:52px"></span>
       <button id="audBtn">Convolve ▸</button>
       <audio id="audAudio" controls></audio>
     </div>
   </div>
   <div class="tabs" id="tabs">
-    <button data-t="rep" class="on">Report</button><button data-t="met">Metrics</button><button data-t="json">Preset JSON</button><button data-t="help">How it works</button>
+    <button data-t="rep" class="on">Report</button><button data-t="met">Metrics</button><button data-t="json">Preset JSON</button><button data-t="help">How it works</button><a href="/strange/docs" target="_blank" rel="noopener" style="align-self:center;margin-left:auto;color:var(--accent);font-size:12px">Full documentation ↗</a>
   </div>
-  <div style="display:flex;gap:8px;align-items:center;margin:0 0 8px"><button id="anaBtn" title="ISO 3382 analysis and report of the last render (only computed on request)">Analyze ▸</button><span class="hint" style="margin:0">analysis runs on request (renders stay fast)</span></div>
+  <div style="display:flex;gap:8px;align-items:center;margin:0 0 8px"><button id="anaBtn" data-help="ui.analyze" title="ISO 3382 analysis and report of the last render (only computed on request)">Analyze ▸</button><span class="hint" style="margin:0">analysis runs on request (renders stay fast)</span></div>
   <div class="pane on" id="p-rep"><img id="repImg" alt=""><div class="hint" id="repHint">Render, then press Analyze for the report.</div></div>
   <div class="pane" id="p-met"><pre id="metPre">—</pre><pre id="infoPre"></pre></div>
   <div class="pane" id="p-json">
@@ -141,6 +144,9 @@ canvas{width:100%;background:var(--panel);border:1px solid var(--line);border-ra
 </main>
 </div>
 <div class="tip" id="tip"></div>
+<script src="/static/strange_help.js"></script>
+<script src="/static/help_mode.js"></script>
+<script src="/static/simple_view.js"></script>
 
 <script>
 "use strict";
@@ -159,7 +165,7 @@ function el(tag, attrs={}, ...kids){ const e = document.createElement(tag); for 
 function row(label, ...ctl){ return el("div",{class:"row"}, el("label",{}, label), el("div",{class:"ctl"}, ...ctl)); }
 function changed(){ syncJson(); updateVisibility(); updateReadout(); }
 function num(path, {min=0,max=1,step=0.01,log=false,unit="",auto=false,int=false}={}){
-  const rng = el("input",{type:"range",min:log?Math.log10(min):min,max:log?Math.log10(max):max,step:log?0.001:step});
+  const rng = el("input",{"data-path":path,type:"range",min:log?Math.log10(min):min,max:log?Math.log10(max):max,step:log?0.001:step});
   const box = el("input",{type:"number",step:step,min:min,max:max});
   let ab = null;
   const toR = v => log ? Math.log10(Math.max(v,min)) : v;
@@ -173,7 +179,7 @@ function num(path, {min=0,max=1,step=0.01,log=false,unit="",auto=false,int=false
   return parts;
 }
 function sel(path, options, {onchange}={}){
-  const s = el("select",{});
+  const s = el("select",{"data-path":path});
   options.forEach(o => {
     if (o && o.group){ const g = el("optgroup",{label:o.group}); o.items.forEach(x => g.append(el("option",{value:JSON.stringify(x)}, String(x)))); s.append(g); return; }
     const [v,l] = Array.isArray(o) ? o : [o,o]; s.append(el("option",{value:JSON.stringify(v)}, String(l)));
@@ -183,13 +189,13 @@ function sel(path, options, {onchange}={}){
   return s;
 }
 function chk(path, label=""){
-  const c = el("input",{type:"checkbox"});
+  const c = el("input",{type:"checkbox","data-path":path});
   c.addEventListener("change", () => { setP(S,path,c.checked); refreshAll(); changed(); });
   binders.push(() => { c.checked = !!getP(S,path); });
   return label ? el("label",{style:"display:flex;gap:5px;align-items:center"}, c, label) : c;
 }
 function seg(path, options){
-  const t = el("div",{class:"toggle"});
+  const t = el("div",{class:"toggle","data-path":path});
   options.forEach(o => { const [v,l] = Array.isArray(o) ? o : [o,o]; t.append(el("button",{"data-v":v, onclick:() => { setP(S,path,v); refreshAll(); changed(); }}, l)); });
   binders.push(() => { const v = getP(S,path); t.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === String(v))); });
   return t;
@@ -197,16 +203,16 @@ function seg(path, options){
 function xyz(path){
   const ins = [0,1,2].map(i => { const e = el("input",{type:"number",step:"0.01"}); e.addEventListener("change", () => { const a = clone(getP(S,path) || [0,0,0]); a[i] = parseFloat(e.value)||0; setP(S,path,a); changed(); }); return e; });
   binders.push(() => { const a = getP(S,path) || [0,0,0]; ins.forEach((e,i) => e.value = a[i]); });
-  return el("div",{class:"xyz"}, ...ins);
+  return el("div",{class:"xyz","data-path":path}, ...ins);
 }
 /* three compact 0..1 sliders (relative position) */
 function rel3(path){
-  const ins = [0,1,2].map(i => { const e = el("input",{type:"range",min:0.02,max:0.98,step:0.01,title:"xyz"[i]}); e.addEventListener("input", () => { const a = clone(getP(S,path)); a[i] = +e.value; setP(S,path,a); changed(); }); return e; });
+  const ins = [0,1,2].map(i => { const e = el("input",{"data-path":path,type:"range",min:0.02,max:0.98,step:0.01,title:"xyz"[i]}); e.addEventListener("input", () => { const a = clone(getP(S,path)); a[i] = +e.value; setP(S,path,a); changed(); }); return e; });
   binders.push(() => { const a = getP(S,path) || [0.5,0.5,0.5]; ins.forEach((e,i) => e.value = a[i]); });
   return ins;
 }
 function text(path, {width="80px", parse=v=>v, title=""}={}){
-  const e = el("input",{type:"text",style:`width:${width}`,title});
+  const e = el("input",{type:"text",style:`width:${width}`,title,"data-path":path});
   e.addEventListener("change", () => { const v = parse(e.value); if (v !== undefined){ setP(S,path,v); changed(); } });
   binders.push(() => { const v = getP(S,path); e.value = Array.isArray(v) ? v.join(", ") : (v ?? ""); });
   return e;
@@ -232,7 +238,7 @@ function eqEditor(path){
   binders.push(draw);
   return box;
 }
-function section(title, tag, open, ...content){ const d = el("details", open ? {open:""} : {}); d.append(el("summary",{}, title, tag ? el("span",{class:"tag", id:"tag-"+tag}, "") : ""), el("div",{class:"sec"}, ...content)); return d; }
+function section(title, tag, open, ...content){ const d = el("details", open ? {open:""} : {}); d.append(el("summary",{"data-help":"section."+tag}, title, tag ? el("span",{class:"tag", id:"tag-"+tag}, "") : ""), el("div",{class:"sec"}, ...content)); return d; }
 function show(id, on){ const e = document.getElementById(id); if (e) e.classList.toggle("hide", !on); }
 function tag(id, t){ const e = document.getElementById("tag-"+id); if (e) e.textContent = t; }
 
@@ -312,7 +318,7 @@ function build(){
   const side = $("#side"); side.innerHTML = ""; binders.length = 0;
   const strangeMats = META.strange_materials, otherMats = Object.keys(META.materials).filter(m => !strangeMats.includes(m));
   const matOpts = [{group:"strange materials", items:strangeMats}, {group:"room materials", items:otherMats}];
-  const scaleChips = el("div",{class:"chips"}, ...[0.1,1,10,60,300,1500].map(v => el("button",{onclick:() => { S.space.scale = v; refreshAll(); changed(); }}, "×"+v)));
+  const scaleChips = el("div",{class:"chips","data-path":"space.scale"}, ...[0.1,1,10,60,300,1500].map(v => el("button",{onclick:() => { S.space.scale = v; refreshAll(); changed(); }}, "×"+v)));
 
   side.append(section("Space", "space", true,
     row("Shape", seg("space.shape", META.shapes)),
@@ -325,7 +331,7 @@ function build(){
     el("div",{class:"sub"}, el("h4",{},"Scale: gigantify / miniaturise"),
       row("Scale ×", ...num("space.scale",{min:0.01,max:10000,log:true,step:0.01})),
       row("", scaleChips),
-      el("div",{class:"readout",id:"sizeRead"},"")),
+      el("div",{class:"readout",id:"sizeRead","data-help":"ui.readout"},"")),
     row("Medium", sel("space.medium", [...new Set(Object.values(META.media).map(m => m.group))].map(gr => ({group:gr, items:Object.keys(META.media).filter(k => META.media[k].group === gr)})))),
     el("div",{id:"md-bub"},
       row("Void fraction", ...num("space.void_fraction",{min:0.00001,max:0.6,log:true,step:0.00001})),
@@ -418,7 +424,7 @@ function build(){
     el("div",{class:"hint"},"Gate 0 = off.")
   ));
 
-  const fileIn = el("input",{type:"file",accept:"audio/*,.wav,.flac,.aif,.aiff"});
+  const fileIn = el("input",{type:"file",accept:"audio/*,.wav,.flac,.aif,.aiff","data-path":"imported.source"});
   fileIn.addEventListener("change", () => { const f = fileIn.files[0]; if (!f) return; const fr = new FileReader(); fr.onload = () => { IMPORT_B64 = fr.result; IMPORT_NAME = f.name; updateVisibility(); }; fr.readAsDataURL(f); });
   side.append(section("Imported IR: gigantify any IR", "imp2", false,
     row("Enabled", chk("imported.enabled")),
@@ -431,8 +437,9 @@ function build(){
   ));
 
   side.append(section("Output & direct sound", "out", false,
-    row("Channels", seg("output.channels", [[1,"mono"],[2,"stereo"]])),
-    row("Stereo width", ...num("output.width",{min:0,max:1,step:0.01})),
+    row("Channels", ...num("output.channels",{min:1,max:64,step:1,int:true})),
+    row("Width", ...num("output.width",{min:0,max:1,step:0.01})),
+    el("div",{class:"hint"},"1–64 decorrelated channels in one interleaved WAV. Width: 0 = identical channels, 1 = fully decorrelated. Preview plays channels 1–2; pick any pair for Audition."),
     row("Sample rate", sel("output.sample_rate", [44100,48000,88200,96000])),
     row("Format", sel("output.format", ["PCM_16","PCM_24","PCM_32","FLOAT"])),
     row("Length", ...num("output.length_s",{min:0.05,max:60,step:0.05,unit:"s",auto:true})),
@@ -453,6 +460,7 @@ function refreshAll(){ binders.forEach(b => b()); updateVisibility(); updateRead
 function updateVisibility(){
   const sh = S.space.shape, tm = S.tuning.mode;
   show("md-bub", S.space.medium === "bubbly_water");
+  $("#lrBox").classList.toggle("hide", (+S.output.channels || 1) < 3);
   show("sz-r", sh !== "box"); show("sz-l", ["cylinder","pipe","bottle"].includes(sh)); show("sz-box", sh === "box");
   show("sz-ends", sh === "cylinder" || sh === "pipe"); show("sz-neck", sh === "bottle");
   show("tn-custom", S.tuning.scale === "custom"); show("tn-snap", tm === "snap"); show("tn-rep", tm === "replace" || tm === "add" || S.imprint.gain_db > 0);
@@ -464,7 +472,7 @@ function updateVisibility(){
   tag("echo", S.echoes.enabled ? S.echoes.period : "off"); tag("shell", S.shell.enabled ? "on" : "off");
   tag("mot", (S.motion.glide_oct_per_s || S.motion.wobble_cents) ? "moving" : "still"); tag("imp", S.imprint.gain_db > 0 ? `+${S.imprint.gain_db} dB` : "off");
   tag("env", [S.envelope.bloom_ms > 0 && "bloom", S.envelope.gate_ms > 0 && "gate", S.envelope.reverse && "reverse"].filter(Boolean).join(" · ") || "–");
-  tag("imp2", S.imported.enabled ? "×" + S.imported.scale : "off"); tag("out", `${S.output.channels === 1 ? "mono" : "stereo"} · ${S.output.sample_rate}`);
+  tag("imp2", S.imported.enabled ? "×" + S.imported.scale : "off"); tag("out", `${{1:"mono", 2:"stereo"}[S.output.channels] || S.output.channels + " ch"} · ${S.output.sample_rate}`);
 }
 function syncJson(){ $("#jsonTa").value = JSON.stringify(S, null, 2); }
 
@@ -508,7 +516,7 @@ function showResult(r){
   if (r.files.report){ $("#repImg").src = r.files.report; $("#repHint").textContent = ""; }
   else { $("#repImg").removeAttribute("src"); $("#repHint").textContent = "Press Analyze for the report and measured T30."; }
   $("#prevAudio").src = r.files.preview;
-  $("#dlinfo").textContent = `wav → ${r.files.wav_path}`;
+  $("#dlinfo").textContent = `${i.channels || 1}-channel wav → ${r.files.wav_path}`;
   $("#metPre").textContent = r.table || "";
   const info = clone(i); delete info.t60_bands; $("#infoPre").textContent = JSON.stringify({...info, t60_bands: i.t60_bands}, null, 2);
   drawEnv(r.envelope); drawMap(r.display);
@@ -549,7 +557,7 @@ function mapHover(e){
 }
 async function audition(){
   if (!LAST){ status("render first", true); return; }
-  const body = {wet:+$("#wetIn").value, left:0, right:1};
+  const body = {wet:+$("#wetIn").value, left:(+$("#lCh").value||1)-1, right:(+$("#rCh").value||2)-1};
   if ($("#drySel").value === "file"){
     const f = $("#dryFile").files[0]; if (!f){ $("#dryFile").click(); return; }
     body.dry_b64 = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(f); });
@@ -636,6 +644,14 @@ function mutate(){
   window.addEventListener("resize", () => { if (LAST){ drawEnv(LAST.envelope); drawMap(LAST.display); } });
   document.addEventListener("keydown", e => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") render(); });
   drawMap(null);
+  IrgenHelpMode({help: window.IRGEN_HELP, button: $("#helpBtn"), docs: "/strange/docs", status});
+  // simple view: the parameters with the most dramatic audible effect
+  IrgenSimpleView({toggle: $("#viewToggle"), panel: $("#side"), keys: [
+    "space.shape", "space.radius_m", "space.length_m", "space.dimensions", "space.scale", "ui.readout",
+    "space.medium", "space.void_fraction", "space.wall", "space.decay_scale", "space.t60_floor_s",
+    "tuning.mode", "tuning.root", "tuning.scale", "tuning.amount", "imprint.gain_db",
+    "echoes.enabled", "echoes.dispersion", "shell.enabled", "motion.glide_oct_per_s", "motion.wobble_cents",
+    "envelope.bloom_ms", "envelope.reverse", "direct.level_db"]});
 })();
 </script>
 </body>
