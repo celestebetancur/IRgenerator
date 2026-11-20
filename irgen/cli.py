@@ -163,6 +163,17 @@ def main(argv=None):
     st.add_argument("--layout", default="separate", choices=["separate", "interleaved", "both"])
     st.add_argument("--preview", action="store_true", help="fast preview variant")
     st.add_argument("--import-ir", default=None, metavar="WAV")
+    bl = sub.add_parser("blend", help="blend two multichannel IR folders into a new one (min(A, B) channels)")
+    bl.add_argument("name", help="name of the new folder (renders/blends/<name>)")
+    bl.add_argument("a", help="IR folder A: a path, a set id, set/<id>, blend/<name>, gui/<name> or strange/<name>")
+    bl.add_argument("b", help="IR folder B (same forms)")
+    bl.add_argument("--mode", default="morph", choices=["morph", "mix"])
+    bl.add_argument("--amount", type=float, default=0.5, help="0 = A, 1 = B")
+    bl.add_argument("--normalize", default="energy", choices=["energy", "peak", "none"])
+    bl.add_argument("--layout", default="separate", choices=["separate", "interleaved", "both"])
+    bl.add_argument("--format", default="FLOAT", choices=["FLOAT", "PCM_16", "PCM_24", "PCM_32"])
+    bl.add_argument("--force", action="store_true", help="overwrite an existing blend")
+    bl.add_argument("-o", "--outdir", default=None, help="parent folder (default renders/blends)")
     sub.add_parser("materials", help="list the material database")
     g = sub.add_parser("gui", help="open the browser GUI")
     g.add_argument("--port", type=int, default=8765)
@@ -214,6 +225,17 @@ def main(argv=None):
         m = render_set(canon, "preview" if args.preview else "full")
         print(json.dumps({k: m[k] for k in ("set_id", "stage", "channels", "sample_rate", "length_s", "direct_index",
                                             "render_seconds", "cached") if k in m}, indent=1))
+        print(f"-> {Path(m['files'][0]['path']).parent if m['files'] else m['interleaved']['path']}")
+    elif args.cmd == "blend":
+        from .blend import BlendError, blend_folders
+        try:
+            m, _ = blend_folders(args.name, args.a, args.b, args.mode, args.amount, args.normalize, args.layout,
+                                 args.format, args.force, args.outdir)
+        except BlendError as e:
+            print(f"irgen blend: {e}{' (use --force)' if 'exists' in str(e) else ''}", file=sys.stderr)
+            return 2
+        print(f"{args.mode} {args.amount:g}: {m['blend']['a']['channels']} + {m['blend']['b']['channels']} ch -> "
+              f"{m['channels']} ch, {m['length_s']:.2f} s ({m['render_seconds']:.1f} s)")
         print(f"-> {Path(m['files'][0]['path']).parent if m['files'] else m['interleaved']['path']}")
     elif args.cmd == "gui":
         from .gui import serve

@@ -136,6 +136,9 @@ python -m irgen set strange/dorian_cistern -n 8 --set tuning.root=E2     # offli
 | `GET /v1/jobs/<id>` | `status` (queued / rendering / done / error / cancelled), `stage`, `preview_manifest`, `manifest` |
 | `DELETE /v1/jobs/<id>` | cancel a queued job |
 | `GET /v1/sets`, `GET /v1/sets/<id>`, `DELETE /v1/sets/<id>` | cached sets |
+| `POST /v1/blends` | blend two IR folders: `{name, a, b, mode, amount}` → `202 {job}` (or the manifest with `"wait": true`); see below |
+| `GET /v1/blends`, `GET /v1/blends/<name>`, `GET /v1/blends/<name>/ch01.wav`, `DELETE /v1/blends/<name>` | blends |
+| `GET /v1/folders` | every IR folder that can be blended |
 | `GET /v1/sets/<id>/ch01.wav` | one file of the set (the manifest also gives absolute paths) |
 
 A request looks like this:
@@ -160,6 +163,27 @@ A request looks like this:
 - A set appears atomically: it is written to a temporary folder and renamed into place, so the host never reads a half-written set.
 - Identical requests in flight share one job.
 - Everything binds to 127.0.0.1 only.
+
+## Blending two IR folders
+
+The blend combines two multichannel IR folders into a new one in `renders/blends/<name>/`, in the same format as an IR set (one WAV per channel plus `manifest.json`), so AURA can load it like any other set. Channel *i* of A is blended with channel *i* of B, so the result has **min(A, B) channels**.
+
+```bash
+python -m irgen blend hall_room set/1ff88e05a5098263 set/785ce16a09a57579 --mode morph --amount 0.5
+python -m irgen blend layered renders/blends/hall_room strange/dorian_cistern --mode mix --amount 0.3
+```
+
+In the GUI, press **⇄ Blend** in either header to open the Blend page (`/blend`) in a new tab. Pick A and B from every folder irgen knows about, or type a path, then set the mode, amount and name. The page shows the envelopes of A, B and the result, a preview, Audition and the manifest. The docs for this page are at `/blend/docs`.
+
+- **Folders:** an IR set (`set/<id>` or a bare set id), `blend/<name>`, `gui/<name>`, `strange/<name>`, or any folder of WAVs (the multichannel WAV, or else the mono WAVs sorted by name).
+- **Preparation:** B is resampled to A's rate if they differ. Both are aligned at their direct sound and scaled to equal energy.
+- **`amount`:** 0 = A, 1 = B.
+- **`mix`:** a weighted sum. It is coherent (linear) for the first 2.5 ms around the shared direct sound and equal power after that.
+- **`morph`:** a perceptual in-between space, computed per 1/3-octave band and channel. The decay time moves geometrically, T = T<sub>A</sub><sup>1−a</sup>·T<sub>B</sub><sup>a</sup>. Each band's envelope is time-warped onto that decay, its level is interpolated in dB, and both fine structures are mixed at equal power.
+  - Accuracy: measured on a studio (T30 0.2 s) → hall (1.8 s) morph, T30 is within ±3 % of the target from 250 Hz up. The 125 Hz band of a small room with strong low modes comes out about 10 % high.
+  - Channel decorrelation is kept.
+  - Speed: about 1 s for 8 channels, about 15 s for 64 channels × 6 s.
+- **Output options:** `normalize` (energy, the default for equal loudness between swaps; peak; none), `layout` (separate / interleaved / both), `format`. An existing name is only replaced with `--force` (CLI), `"overwrite": true` (API) or a confirmation (GUI).
 
 ## Quality notes
 

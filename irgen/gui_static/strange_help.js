@@ -256,6 +256,7 @@ Object.assign(P, {
   "ui.view": {t: "Full / Simple view", s: "Simple shows only the parameters with the biggest audible effect; Full shows everything.",
     b: `Simple keeps the shape and size, Scale, medium, wall, decay and freeze, the tuning (mode, root, scale, snap amount) and imprint, echoes and dispersion, the shell, glide and wobble, bloom and reverse, and direct/reverb.`,
     d: `Hidden parameters keep their values and still render; switching to Full restores every control and the open sections.`},
+  "ui.blend_link": {t: "Blend", s: "Opens the Blend page (new tab): mix or morph two multichannel IR folders into a new one.", b: `Render or pick two IR folders first (sets, GUI renders or earlier blends).`, d: `See the Blend docs at /blend/docs.`},
   "ui.help": {t: "Help mode", s: "Point at any control to see what it does. Click to pin the card. Esc or Help again to exit.", b: ``, d: ``},
   "ui.envelope": {t: "Envelope plot", s: "Level of the rendered IR over time (channel 1, dB).", b: `A straight falling line is a clean exponential decay; bumps are echoes or beating modes.`, d: `2 ms RMS frames, normalised to the peak.`},
   "ui.map": {t: "Resonance map", s: "Every mode of the space: position = pitch, height = energy, colour = layer. Grey lines = scale pitches.",

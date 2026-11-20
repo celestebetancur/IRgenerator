@@ -167,7 +167,9 @@ class Handler(BaseHTTPRequestHandler):
             if u.path == "/api/preset":
                 name = _safe(q.get("name", [""])[0])
                 return self._send(200, json.loads((PRESETS / f"{name}.json").read_text()))
-            if u.path in ("/docs", "/strange/docs"):
+            if u.path == "/blend":
+                return self._send(200, (STATIC / "blend.html").read_bytes(), "text/html; charset=utf-8")
+            if u.path in ("/docs", "/strange/docs", "/blend/docs"):
                 return self._send(200, (STATIC / "docs.html").read_bytes(), "text/html; charset=utf-8")
             if u.path.startswith("/static/"):
                 fn = u.path[len("/static/"):]
@@ -225,6 +227,8 @@ class Handler(BaseHTTPRequestHandler):
                 preset["name"] = name
                 path.write_text(json.dumps(preset, indent=2))
                 return self._send(200, {"ok": True, "name": name})
+            if u.path == "/api/blend":
+                return self._blend(data)
             if u.path == "/api/analyze":
                 return self._analyze(data.get("kind", "standard"))
             if u.path == "/api/strange/render":
@@ -285,6 +289,41 @@ class Handler(BaseHTTPRequestHandler):
                       "preview": url(outdir / "_preview.wav"), "json": url(files.get("json"))},
             "envelope": {"hop_s": hop / fs, "db": np.round(np.maximum(env, -120), 1).tolist()},
         })
+
+    def _blend(self, data):
+        """Blend two IR folders (irgen.blend), keep the result for Audition, return a preview."""
+        from .blend import BLENDS, BlendError, _safe as bsafe, blend_folders
+        name = bsafe(data.get("name"))
+        if name and (BLENDS / name).exists() and not data.get("overwrite"):
+            return self._send(409, {"error": f"blend '{name}' exists", "exists": True})
+        if not _lock.acquire(blocking=False):
+            return self._send(429, {"error": "a render is already running"})
+        try:
+            t0 = time.time()
+            ins = {}
+            try:
+                m, y = blend_folders(name, data.get("a"), data.get("b"), data.get("mode", "morph"),
+                                     float(data.get("amount", 0.5)), data.get("normalize", "energy"),
+                                     data.get("layout", "separate"), data.get("format", "FLOAT"),
+                                     bool(data.get("overwrite")), inspect=ins)
+            except BlendError as e:
+                return self._send(400, {"error": str(e)})
+        finally:
+            _lock.release()
+        fs = m["sample_rate"]
+        _last.update(ir=y if y.shape[0] > 1 else y[0], fs=fs, name=f"blends/{name}")
+        pdir = OUT / "blends" / name
+        pdir.mkdir(parents=True, exist_ok=True)
+        prev = y[0] if y.shape[0] == 1 else y[:2].T
+        (pdir / "_preview.wav").write_bytes(_wav_bytes(prev / max(np.max(np.abs(prev)), 1e-9) * 0.89, fs))
+        hop = max(1, int(0.002 * fs))
+
+        def env(x):
+            e = (x[: x.size // hop * hop].reshape(-1, hop) ** 2).mean(axis=1)
+            return np.round(np.maximum(10 * np.log10(e + 1e-30), -200), 1).tolist()   # absolute: inputs and result share one energy scale
+        return self._send(200, {"seconds": round(time.time() - t0, 2), "manifest": m,
+                                "preview": f"/files/blends/{name}/_preview.wav?t={int(time.time() * 1000)}",
+                                "envelopes": {"hop_s": hop / fs, "a": env(ins["a"][0]), "b": env(ins["b"][0]), "result": env(y[0])}})
 
     def _analyze(self, kind):
         """Analysis report(s) of the view's last render, computed only when asked for."""

@@ -132,6 +132,7 @@ Object.assign(P, {
   "ui.view": {t: "Full / Simple view", s: "Simple shows only the parameters with the biggest audible effect; Full shows everything.",
     b: `Simple keeps the room plan, dimensions, surfaces, T60 scale, direct/late ratio, early gain, pre-delay and tail attack (the last two only in parametric mode), and channels. Use the Physical / Hybrid / Perceptual switch to change the layers.`,
     d: `Hidden parameters keep their values and still render; switching to Full restores every control and the open sections.`},
+  "ui.blend_link": {t: "Blend", s: "Opens the Blend page (new tab): mix or morph two multichannel IR folders into a new one.", b: `Render or pick two IR folders first (sets, GUI renders or earlier blends).`, d: `See the Blend docs at /blend/docs.`},
   "ui.help": {t: "Help mode", s: "Point at any control to see what it does. Click to pin the card. Esc or Help again to exit.", b: ``, d: ``},
   "ui.plan": {t: "Room plan", s: "Top view of the room: drag the source (orange) and the mic (blue); green dots are the array mics.", b: ``, d: `x to the right, y up. Heights are set in the xyz fields.`},
   "ui.envelope": {t: "Envelope plot", s: "Level of the rendered IR over time (channel 1, dB).", b: `A straight line is a clean exponential decay.`, d: `2 ms RMS frames, normalised to the peak.`},

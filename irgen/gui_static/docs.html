@@ -52,15 +52,17 @@ sub,sup{line-height:0}
 <div class="wrap"><nav id="toc"></nav><main id="doc"></main></div>
 <script>
 "use strict";
-// one page for both views: /docs (standard) and /strange/docs (strange spaces)
-const STRANGE = location.pathname.startsWith("/strange");
-document.write(`<script src="/static/${STRANGE ? "strange" : "standard"}_help.js"><\/script>`);
+// one page for every view: /docs (standard), /strange/docs, /blend/docs
+const VIEW = location.pathname.startsWith("/strange") ? "strange" : location.pathname.startsWith("/blend") ? "blend" : "standard";
+const STRANGE = VIEW === "strange";
+document.write(`<script src="/static/${VIEW}_help.js"><\/script>`);
 </script>
 <script>
 "use strict";
 const H = window.IRGEN_HELP, $ = s => document.querySelector(s);
-$("#title").innerHTML = STRANGE ? 'irgen <span>✦ strange spaces</span>: documentation' : 'irgen <span>standard view</span>: documentation';
-Object.assign($("#other"), {href: STRANGE ? "/docs" : "/strange/docs", textContent: STRANGE ? "Standard view docs →" : "Strange spaces docs →"});
+$("#title").innerHTML = {strange: 'irgen <span>✦ strange spaces</span>: documentation', blend: 'irgen <span>⇄ blend IRs</span>: documentation', standard: 'irgen <span>standard view</span>: documentation'}[VIEW];
+const others = {standard: [["/strange/docs", "Strange spaces docs"], ["/blend/docs", "Blend docs"]], strange: [["/docs", "Standard view docs"], ["/blend/docs", "Blend docs"]], blend: [["/docs", "Standard view docs"], ["/strange/docs", "Strange spaces docs"]]}[VIEW];
+$("#other").outerHTML = others.map(([h, t]) => `<a href="${h}" style="color:var(--accent);font-size:12.5px;text-decoration:none">${t} →</a>`).join(" ");
 if (!STRANGE) document.documentElement.style.cssText = "--accent:#5fb3ff;--accent2:#7ee0b5";
 function el(tag, attrs={}, html){ const e = document.createElement(tag); for (const [k,v] of Object.entries(attrs)) e.setAttribute(k, v); if (html != null) e.innerHTML = html; return e; }
 function block(key, p){

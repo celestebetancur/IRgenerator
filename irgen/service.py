@@ -13,6 +13,11 @@ under /v1 in the GUI server. Everything binds to 127.0.0.1.
     GET    /v1/sets | /v1/sets/<id>    cached sets / one manifest
     GET    /v1/sets/<id>/<file>        a WAV of the set
     DELETE /v1/sets/<id>               remove a cached set
+    POST   /v1/blends                  {name, a, b, mode, amount} -> 202 {job} (or 200 manifest with "wait": true)
+    GET    /v1/blends | /v1/blends/<name>          blends / one manifest
+    GET    /v1/blends/<name>/<file>    a WAV of the blend
+    DELETE /v1/blends/<name>           remove a blend
+    GET    /v1/folders                 every IR folder that can be blended (sets, blends, GUI renders)
 
 A set is content-addressed: the same request (preset + overrides + set options + irgen
 version) gives the same set id, is rendered once and served from renders/sets/<id>/.
@@ -338,6 +343,20 @@ class Jobs:
                 self.cv.notify()
             return self._public(j)
 
+    def submit_fn(self, label, fn):
+        """Queue any job that returns a manifest (e.g. a blend)."""
+        with self.cv:
+            j = {"id": uuid.uuid4().hex[:12], "set_id": label, "status": "queued", "stage": None, "preview": False,
+                 "created": time.time(), "started": None, "finished": None, "error": None, "manifest": None,
+                 "preview_manifest": None, "cached": False, "_fn": fn}
+            self.jobs[j["id"]] = j
+            self.queue.append(j["id"])
+            if self.worker is None or not self.worker.is_alive():
+                self.worker = threading.Thread(target=self._run, daemon=True, name="irgen-sets")
+                self.worker.start()
+            self.cv.notify()
+            return self._public(j)
+
     def get(self, jid):
         with self.cv:
             j = self.jobs.get(jid)
@@ -369,10 +388,13 @@ class Jobs:
                 j = self.jobs[self.queue.pop(0)]
                 j.update(status="rendering", started=time.time())
             try:
-                if j["preview"]:
+                if j.get("_fn"):
+                    j["stage"] = "full"
+                    j["manifest"] = j["_fn"]()
+                elif j["preview"]:
                     j["stage"] = "preview"
                     j["preview_manifest"] = render_set(j["_canon"], "preview")
-                if not j.get("_cancel"):
+                if not j.get("_fn") and not j.get("_cancel"):
                     j["stage"] = "full"
                     j["manifest"] = render_set(j["_canon"], "full")
                 with self.cv:
@@ -432,6 +454,11 @@ def handle(method, path, body=None):
                     return 404, {"error": "file not found"}, None
                 ctype = "audio/wav" if p.suffix == ".wav" else "application/json"
                 return 200, p.read_bytes(), ctype
+        if parts[:1] == ["folders"] and method == "GET":
+            from .blend import list_folders
+            return 200, list_folders(), None
+        if parts[:1] == ["blends"]:
+            return _blends(method, parts[1:], body)
         if parts[:1] == ["jobs"]:
             if method == "GET" and len(parts) == 1:
                 return 200, JOBS.list(), None
@@ -443,9 +470,54 @@ def handle(method, path, body=None):
         return 404, {"error": f"no route {method} {path}"}, None
     except RequestError as e:
         return 400, {"error": str(e)}, None
+    except ValueError as e:   # BlendError and other request problems
+        return 400, {"error": str(e)}, None
     except Exception as e:
         traceback.print_exc()
         return 500, {"error": f"{type(e).__name__}: {e}"}, None
+
+
+def _blends(method, parts, body):
+    from . import blend as bl
+    if method == "POST" and not parts:
+        b = body or {}
+        args = dict(name=b.get("name"), a=b.get("a"), b=b.get("b"), mode=b.get("mode", "morph"),
+                    amount=b.get("amount", 0.5), normalize=b.get("normalize", "energy"),
+                    layout=b.get("layout", "separate"), fmt=b.get("format", "FLOAT"), overwrite=bool(b.get("overwrite")))
+        # validate now (names, folders, options), so mistakes come back as 400 instead of a failed job
+        bl.resolve_folder(args["a"]), bl.resolve_folder(args["b"])
+        if not bl._safe(args["name"]):
+            raise RequestError("give the blend a name")
+        if (bl.BLENDS / bl._safe(args["name"])).exists() and not args["overwrite"]:
+            raise RequestError(f"blend '{bl._safe(args['name'])}' exists (pass \"overwrite\": true)")
+        if args["mode"] not in bl.MODES:
+            raise RequestError(f"mode must be one of {bl.MODES}")
+        if b.get("wait"):
+            return 200, bl.blend_folders(**args)[0], None
+        return 202, JOBS.submit_fn(f"blend/{bl._safe(args['name'])}", lambda: bl.blend_folders(**args)[0]), None
+    if method == "GET" and not parts:
+        out = []
+        if bl.BLENDS.is_dir():
+            for m in sorted(bl.BLENDS.glob("*/manifest.json"), key=lambda p: p.stat().st_mtime, reverse=True):
+                j = json.loads(m.read_text())
+                out.append({k: j.get(k) for k in ("name", "created", "channels", "sample_rate", "length_s", "blend")})
+        return 200, out, None
+    name = bl._safe(parts[0]) if parts else ""
+    if len(parts) == 1 and method == "GET":
+        m = bl.find_blend(name)
+        return (200, m, None) if m else (404, {"error": "blend not found"}, None)
+    if len(parts) == 1 and method == "DELETE":
+        d = bl.BLENDS / name
+        if not name or not d.is_dir():
+            return 404, {"error": "blend not found"}, None
+        shutil.rmtree(d)
+        return 200, {"ok": True}, None
+    if len(parts) == 2 and method == "GET":
+        p = (bl.BLENDS / name / parts[1]).resolve()
+        if not str(p).startswith(str((bl.BLENDS / name).resolve()) + os.sep) or not p.is_file():
+            return 404, {"error": "file not found"}, None
+        return 200, p.read_bytes(), ("audio/wav" if p.suffix == ".wav" else "application/json")
+    return 404, {"error": f"no route {method} /v1/blends/{'/'.join(parts)}"}, None
 
 
 def send(handler, code, payload, ctype=None):
