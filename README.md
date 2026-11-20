@@ -190,6 +190,10 @@ In the GUI, press **⇄ Blend** in either header to open the Blend page (`/blend
 - **Each reflection is filtered individually.** Every reflection gets its own minimum-phase filter, built from its absorption, scattering loss, air absorption and tone, plus a band-limited fractional delay (Kaiser-windowed sinc). Arrival times are sub-sample accurate and there is no pre-ringing.
 - **Late tail.** Noise goes through a perfect-reconstruction 1/3-octave filterbank (cos² masks that sum exactly to 1). Every band decays with its own T60, interpolated continuously over log-frequency. Air absorption is part of the T60.
 - **T60 calibration.** `late.calibrate` (default 3 iterations) measures the octave-band T30 of the finished IR and corrects the internal decay until it matches the target. The report plots target against measured.
+- **Speed.**
+  - **Calibration cache:** the correction factors are cached per exact calibration setup in `renders/cache/calibration/`. Re-rendering the same room skips the extra passes and returns the identical IR; changes that can't affect the decay (name, output format, level, channel count) still hit the cache. Set `IRGEN_CALIBRATION_CACHE=0` to turn it off.
+  - **Draft:** in the GUI, tick **draft** next to Render to skip calibration while you tweak.
+  - **Parallel filterbank:** the late-tail bands run in parallel in both engines, with output identical to a single-threaded render.
 - **Physical consistency.** The tail level is the theoretical diffuse energy (4πc/V·e^(−13.8t/T)) on the same scale as the image sources (direct sound = 1/r). Image-model energy and tail energy agree to within about 1 dB, and the crossover uses complementary windows. Modal synthesis uses the same scale. Below the crossover it is joined with a Linkwitz-Riley split for the early (correlated) part and a power-complementary Butterworth split for the late (uncorrelated) part.
 - **Realism details:**
   - Randomized image positions (`image_jitter_m`) prevent sweeping or flutter echoes in the shoebox.

@@ -1,0 +1,53 @@
+{
+  "name": "singing_bowl_sanctuary",
+  "_about": "Inside a giant brass singing bowl: bell-like stretched partials on G minor pentatonic, detuned pairs that beat slowly like a real bowl, and a brass shell ringing along on the same scale.",
+  "space": {
+    "shape": "cylinder",
+    "radius_m": 0.14,
+    "length_m": 0.09,
+    "wall": "brass",
+    "scale": 9,
+    "t60_floor_s": 9
+  },
+  "tuning": {
+    "mode": "replace",
+    "root": "G2",
+    "scale": "minor_pentatonic",
+    "range_hz": [
+      90,
+      5000
+    ],
+    "partials": 4,
+    "inharmonicity": 0.03,
+    "tilt_db_per_oct": -5,
+    "ring_s": 11,
+    "amount": 1.0,
+    "root_emphasis_db": 6
+  },
+  "modes": {
+    "detune_cents": 6
+  },
+  "shell": {
+    "enabled": true,
+    "material": "brass",
+    "thickness_mm": 3,
+    "count": 40,
+    "gain_db": -6
+  },
+  "diffuse": {
+    "enabled": false
+  },
+  "motion": {
+    "wobble_cents": 3,
+    "wobble_hz": 0.9
+  },
+  "imprint": {
+    "gain_db": 0
+  },
+  "direct": {
+    "level_db": -10
+  },
+  "output": {
+    "max_length_s": 16
+  }
+}

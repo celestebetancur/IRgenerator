@@ -910,7 +910,8 @@ def generate_strange(preset, imported=None):
                                                          * 10 ** (float(shc.get("gain_db", -10)) / 10) if As_.size else 1)])
     allk = np.concatenate([Kd, np.full(Fs_.size, 2)])
     allt = np.concatenate([T, Ts_])
-    disp = {"modes": [], "grid": [], "crossover_hz": float(f_x) if f_x < f_top else None}
+    shows_diffuse = cfg["diffuse"].get("enabled", True) and cfg["diffuse"].get("range", "above_modes") == "above_modes"
+    disp = {"modes": [], "grid": [], "crossover_hz": float(f_x) if (f_x < f_top and shows_diffuse) else None}
     if allf.size:
         lvl = 10 * np.log10(np.maximum(alle, 1e-30) / max(alle.max(), 1e-30))
         top = np.argsort(-lvl)[:1500]

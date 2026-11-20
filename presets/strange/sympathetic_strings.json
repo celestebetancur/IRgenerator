@@ -1,0 +1,48 @@
+{
+  "name": "sympathetic_strings",
+  "_about": "A wooden body full of sympathetic strings tuned to the harmonic series on D: every note you play wakes the strings, and a flutter at the root keeps them buzzing like a sitar.",
+  "space": {
+    "shape": "box",
+    "dimensions": [
+      1.1,
+      0.35,
+      0.18
+    ],
+    "wall": "wood"
+  },
+  "tuning": {
+    "mode": "replace",
+    "root": "D2",
+    "scale": "harmonic_series",
+    "range_hz": [
+      70,
+      4500
+    ],
+    "partials": 6,
+    "inharmonicity": 0.002,
+    "tilt_db_per_oct": -3,
+    "ring_s": 9,
+    "root_emphasis_db": 3
+  },
+  "modes": {
+    "detune_cents": 2.5
+  },
+  "diffuse": {
+    "enabled": false
+  },
+  "echoes": {
+    "enabled": true,
+    "period": "note",
+    "dispersion": 0.15,
+    "gain_db": -14
+  },
+  "imprint": {
+    "gain_db": 0
+  },
+  "direct": {
+    "level_db": -8
+  },
+  "output": {
+    "max_length_s": 12
+  }
+}

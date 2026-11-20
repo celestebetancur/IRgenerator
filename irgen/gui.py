@@ -253,6 +253,8 @@ class Handler(BaseHTTPRequestHandler):
     def _render(self, data):
         from .cli import render_preset
         preset = data["preset"]
+        if data.get("draft"):   # fast preview: no T30 calibration passes (the preset itself is untouched)
+            preset = {**preset, "late": {**(preset.get("late") or {}), "calibrate": 0}}
         name = _safe(data.get("name") or preset.get("name"))
         outdir = OUT / name
         if not _lock.acquire(blocking=False):

@@ -4,6 +4,9 @@ and low-frequency modal synthesis for rectangular rooms."""
 
 from __future__ import annotations
 
+import os
+from concurrent.futures import ThreadPoolExecutor
+
 import numpy as np
 
 
@@ -91,6 +94,21 @@ def _flatten(band, fs, fc, bpo, onset_idx, cycles):
     return band * np.clip(g, 0.5, 2.0)
 
 
+def _ordered_bands(centers, work, workers=None):
+    """Run work(i, fc) for every band on a few threads; yield the results in band order,
+    a batch at a time (memory stays at ~workers bands; sums keep the serial order, so the
+    result is identical to a single-threaded loop). FFTs, filters and ufuncs release the GIL."""
+    W = workers or max(1, min(8, os.cpu_count() or 1))
+    if W == 1:
+        for i, fc in enumerate(centers):
+            yield work(i, fc)
+        return
+    with ThreadPoolExecutor(W) as ex:
+        for b0 in range(0, centers.size, W):
+            for r in ex.map(lambda i: work(i, centers[i]), range(b0, min(b0 + W, centers.size))):
+                yield r
+
+
 def shape_noise(noise, fs, centers, env_fn, flatten=None):
     """Split noise into bands (zero-phase masks), multiply band i by env_fn(i, fc)
     (amplitude envelope, length n) and sum. flatten = (bands_per_octave, onset_idx, cycles)."""
@@ -99,15 +117,20 @@ def shape_noise(noise, fs, centers, env_fn, flatten=None):
     X = np.fft.rfft(noise, nfft)
     f = np.fft.rfftfreq(nfft, 1.0 / fs)
     masks = band_masks(f, centers)
-    out = np.zeros(n)
-    for i, fc in enumerate(centers):
+
+    def work(i, fc):
         env = env_fn(i, fc)
         if env is None:
-            continue
+            return None
         band = np.fft.irfft(X * masks[i], nfft)[:n]
         if flatten:
             band = _flatten(band, fs, fc, *flatten)
-        out += band * env
+        return band * env
+
+    out = np.zeros(n)
+    for b in _ordered_bands(centers, work):
+        if b is not None:
+            out += b
     return out
 
 
@@ -123,11 +146,13 @@ def shape_noise_multi(noises, fs, centers, env_fn, mix_fn=None, flatten=None):
         X = X.astype(np.complex64)
     f = np.fft.rfftfreq(nfft, 1.0 / fs)
     masks = band_masks(f, centers)
-    out = np.zeros((N, n), dtype=dt)
-    for i, fc in enumerate(centers):
+    # many channels: fewer bands in flight at once (each one is N x n)
+    workers = max(1, min(8, os.cpu_count() or 1, int(2.0e9 / max(1, 6 * N * n * np.dtype(dt).itemsize))))
+
+    def work(i, fc):
         env = env_fn(i, fc)
         if env is None:
-            continue
+            return None
         Xb = X * masks[i][None, :].astype(X.real.dtype)
         if mix_fn is not None:
             M = mix_fn(fc).astype(X.real.dtype)
@@ -135,7 +160,12 @@ def shape_noise_multi(noises, fs, centers, env_fn, mix_fn=None, flatten=None):
         band = np.fft.irfft(Xb, nfft, axis=1)[:, :n]
         if flatten:
             band = _flatten(band, fs, fc, *flatten)
-        out += (band * env[None, :]).astype(dt)
+        return (band * env[None, :]).astype(dt)
+
+    out = np.zeros((N, n), dtype=dt)
+    for b in _ordered_bands(centers, work, workers):
+        if b is not None:
+            out += b
     return out.astype(np.float64)
 
 

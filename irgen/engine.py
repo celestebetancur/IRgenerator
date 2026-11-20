@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+import copy
+import hashlib
+import json
+import os
+from pathlib import Path
+
 import numpy as np
 
 from . import acoustics as ac
@@ -73,6 +79,55 @@ class Room:
         self.t_first = min(firsts) / self.c
 
 
+# T30 calibration factors, cached per exact calibration setup (renders/cache/calibration).
+# Calibration is deterministic, so a hit reproduces the very same IR without the extra
+# render + analysis passes. IRGEN_CALIBRATION_CACHE=0 turns the cache off.
+CAL_CACHE = Path(__file__).resolve().parent.parent / "renders" / "cache" / "calibration"
+_cal_mem = {}
+
+
+def _cal_key(cfg, iters):
+    """Everything the mono calibration render depends on (not naming, output format or
+    normalisation: T30 is level-independent; not multichannel: calibration is mono)."""
+    from . import __version__
+    c = copy.deepcopy(cfg)
+    c.pop("name", None)
+    c.pop("multichannel", None)
+    for k in ("format", "dither", "write_report", "normalize", "peak_dbfs"):
+        c["output"].pop(k, None)
+    c["late"]["calibrate"] = iters
+    blob = json.dumps({"irgen": __version__, "cfg": c}, sort_keys=True, default=str)
+    return hashlib.sha256(blob.encode()).hexdigest()[:24]
+
+
+def _cal_get(key):
+    if os.environ.get("IRGEN_CALIBRATION_CACHE", "1") == "0":
+        return None
+    if key in _cal_mem:
+        return _cal_mem[key]
+    p = CAL_CACHE / f"{key}.json"
+    try:
+        hit = json.loads(p.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    _cal_mem[key] = hit
+    return hit
+
+
+def _cal_put(key, adj, hist):
+    if os.environ.get("IRGEN_CALIBRATION_CACHE", "1") == "0":
+        return
+    hit = {"adj": [float(a) for a in adj], "hist": [float(h) for h in hist]}
+    _cal_mem[key] = hit
+    try:
+        CAL_CACHE.mkdir(parents=True, exist_ok=True)
+        tmp = CAL_CACHE / f".{key}.{os.getpid()}.tmp"
+        tmp.write_text(json.dumps(hit))
+        os.replace(tmp, CAL_CACHE / f"{key}.json")
+    except OSError:
+        pass   # read-only location: the in-memory cache still works
+
+
 def generate(preset, verbose=False):
     """Render an IR from a preset (path or dict). Returns (ir, fs, info, resolved_cfg).
 
@@ -88,9 +143,17 @@ def generate(preset, verbose=False):
     # calibration runs on a mono render (fast); the multichannel set is rendered once at the end
     cal_cfg = cfg
     if multi and iters:
-        import copy
         cal_cfg = copy.deepcopy(cfg)
         cal_cfg["multichannel"]["channels"] = 1
+    key = _cal_key(cfg, iters) if iters else None
+    hit = _cal_get(key) if key else None
+    if hit is not None:   # same calibration setup as before: reuse its factors, render once
+        adj, hist = np.array(hit["adj"]), list(hit["hist"])
+        ir, fs, info = _render(cfg, adj)
+        info["t60_calibration_factors"] = dict(zip(ac.OCTAVE_BANDS.tolist(), adj.round(3).tolist()))
+        info["t60_calibration_max_error_pct"] = [round((2 ** h - 1) * 100, 1) for h in hist]
+        info["t60_calibration_cached"] = True
+        return ir, fs, info, cfg
     ir, fs, info = _render(cal_cfg, adj)
     target = np.array(list(info["t60_bands"].values()))
     hist = []
@@ -108,9 +171,10 @@ def generate(preset, verbose=False):
             break
         adj[ok] *= np.clip(err[ok], 0.5, 2.0)
         ir, fs, info = _render(cal_cfg, adj)
-    if multi:
+    if cal_cfg is not cfg:   # calibrated on mono: render the multichannel set once, with the factors
         ir, fs, info = _render(cfg, adj)
     if iters:
+        _cal_put(key, adj, hist)
         info["t60_calibration_factors"] = dict(zip(ac.OCTAVE_BANDS.tolist(), adj.round(3).tolist()))
         info["t60_calibration_max_error_pct"] = [round((2 ** h - 1) * 100, 1) for h in hist]
     return ir, fs, info, cfg

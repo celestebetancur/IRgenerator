@@ -90,6 +90,7 @@ canvas{width:100%;height:120px;background:var(--panel);border:1px solid var(--li
   <button id="strangeBtn" data-help="ui.strange" title="open the strange-spaces layer: bizarre, miniature, gigantified and scale-tuned IRs">✦ Strange spaces</button>
   <span class="sp"></span>
   <span id="status">ready</span>
+  <label class="hint" style="margin:0;display:flex;gap:4px;align-items:center" data-help="ui.draft" title="draft: skip the T30 calibration for a fast preview (the preset is not changed)"><input type="checkbox" id="draftChk">draft</label>
   <button class="primary" id="renderBtn" data-help="ui.render">Render ▸</button>
 </header>
 <div class="wrap">
@@ -455,9 +456,10 @@ async function render(){
   const n = S.multichannel.channels || 1;
   status(`rendering${n > 1 ? " " + n + " channels" : ""}…`, false, true);
   try {
-    const r = await api("/api/render", {preset:S, name:S.name});
+    const draft = $("#draftChk").checked;
+    const r = await api("/api/render", {preset:S, name:S.name, draft});
     LAST = r; showResult(r);
-    status(`done in ${r.seconds}s`);
+    status(`done in ${r.seconds}s${draft ? " (draft: no T30 calibration)" : r.info.t60_calibration_cached ? " (calibration reused)" : ""}`);
   } catch(e){ status(e.message, true); }
   btn.disabled = false;
 }

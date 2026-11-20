@@ -38,6 +38,7 @@ summary .tag{margin-left:auto;font-weight:500;font-size:11px;color:var(--muted)}
 .row label{color:var(--muted)}
 .row .ctl{display:flex;align-items:center;gap:6px;min-width:0}
 .ctl input[type=range]{flex:1;min-width:50px;accent-color:var(--accent)}
+.plan{background:var(--panel2);border:1px solid var(--line);border-radius:6px;width:100%;touch-action:none;display:block}
 .xyz{display:flex;gap:4px}.xyz input{width:64px}
 .hint{color:var(--muted);font-size:11.5px;margin:4px 0 6px}
 .sub{border-top:1px dashed var(--line);margin-top:8px;padding-top:6px}
@@ -292,6 +293,7 @@ function sizeInfo(){
   return {span, f0, like, c};
 }
 function updateReadout(){
+  drawSPlan();
   const r = $("#sizeRead"); if (!r || !S) return;
   const z = sizeInfo();
   const b = boundaryInfo(), lossPct = Math.round((1 - b.R*b.R)*100*(S.space.transmission ?? 1));
@@ -312,6 +314,112 @@ function drawStrip(){
   cents.forEach((c,i) => { const x = pad + c/period*(W-2*pad); h += `<circle cx="${x}" cy="20" r="${i?4:5.5}" fill="${i?"#b98cff":"#ff7ad9"}"/>`; });
   h += `<text x="${W-pad}" y="10" fill="#9a93a8" font-size="9" text-anchor="end">${cents.length} pitches / ${period.toFixed(0)}¢ period</text>`;
   sv.innerHTML = h;
+}
+
+/* ------------------------------------------------------------------ shape plan (drag source / mic) */
+/* Mirrors irgen.strange._rel_pos: positions are 0..1 fractions of the shape's bounding box,
+   clipped to 0.02..0.98 and kept inside 0.95 of the radius for round shapes. */
+const SPLAN = {svg:null, drag:null, read:null};
+function sGeom(){
+  const s = S.space, k = +s.scale || 1, sh = s.shape;
+  if (sh === "box") return {sh, dims: s.dimensions.map(v => v*k)};
+  const g = {sh, a: s.radius_m*k, L: s.length_m*k};
+  if (sh === "bottle") g.neck = [s.neck_radius_m*k, s.neck_length_m*k];
+  return g;
+}
+function uToP(g, rel){                      // relative -> metres (box: corner origin; round shapes: axis at 0)
+  const u = rel.map(v => Math.min(0.98, Math.max(0.02, +v)));
+  if (g.sh === "box") return u.map((v,i) => v*g.dims[i]);
+  let p = u.map(v => (2*v - 1)*g.a);
+  if (g.sh === "sphere"){ const r = Math.hypot(...p); if (r > 0.95*g.a) p = p.map(v => v*0.95*g.a/r); return p; }
+  let [x, y] = p; const r = Math.hypot(x, y); if (r > 0.95*g.a){ x *= 0.95*g.a/r; y *= 0.95*g.a/r; }
+  return [x, y, u[2]*g.L];
+}
+function pToU(g, p){
+  if (g.sh === "box") return p.map((v,i) => v/g.dims[i]);
+  if (g.sh === "sphere") return p.map(v => (v/g.a + 1)/2);
+  return [(p[0]/g.a + 1)/2, (p[1]/g.a + 1)/2, p[2]/g.L];
+}
+const R4 = v => +(+v).toFixed(4);
+/* the two views: world axes, world extent, and the panel they're drawn in */
+function sViews(g){
+  const W = 400, H = 220, pad = 14, gap = 16, pw = (W - gap)/2 - pad, ph = H - 2*pad - 16;
+  const top = {name:"top", axes:[0,1], label:"top (x →, y ↑)", x0:pad, w:pw};
+  const side = {name:"side", x0:pad + pw + gap + pad, w:pw};
+  if (g.sh === "box"){ top.ext = [[0,g.dims[0]],[0,g.dims[1]]]; side.axes = [0,2]; side.ext = [[0,g.dims[0]],[0,g.dims[2]]]; side.label = "side (x →, z ↑)"; }
+  else if (g.sh === "sphere"){ top.ext = [[-g.a,g.a],[-g.a,g.a]]; side.axes = [0,2]; side.ext = [[-g.a,g.a],[-g.a,g.a]]; side.label = "side (x →, z ↑)"; }
+  else { const zl = g.L + (g.neck ? g.neck[1] : 0); top.ext = [[-g.a,g.a],[-g.a,g.a]]; side.axes = [2,0]; side.ext = [[0,zl],[-g.a,g.a]]; side.label = "side (z →, x ↑)"; }
+  [top, side].forEach(v => {
+    const dx = v.ext[0][1]-v.ext[0][0], dy = v.ext[1][1]-v.ext[1][0];
+    v.s = Math.min(v.w/dx, ph/dy); v.ex = 1;
+    if (dy*v.s < 28){ v.ex = 28/(dy*v.s); }                 // thin tubes: exaggerate the thin axis, and say so
+    v.cw = dx*v.s; v.ch = dy*v.s*v.ex;
+    v.ox = v.x0 + (v.w - v.cw)/2; v.oy = pad + (ph - v.ch)/2;
+    v.P = q => [v.ox + (q[v.axes[0]] - v.ext[0][0])*v.s, v.oy + v.ch - (q[v.axes[1]] - v.ext[1][0])*v.s*v.ex];
+    v.inv = (X, Y) => [v.ext[0][0] + (X - v.ox)/v.s, v.ext[1][0] + (v.oy + v.ch - Y)/(v.s*v.ex)];
+  });
+  return [top, side];
+}
+function makeSPlan(){
+  const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("class","plan"); svg.setAttribute("viewBox","0 0 400 220"); svg.dataset.help = "ui.splan";
+  svg.addEventListener("pointerdown", e => { const t = e.target.dataset; if (t.who){ SPLAN.drag = [t.who, t.view]; svg.setPointerCapture(e.pointerId); } });
+  svg.addEventListener("pointermove", e => {
+    if (!SPLAN.drag) return;
+    const [who, view] = SPLAN.drag, g = sGeom(), v = sViews(g).find(q => q.name === view);
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const m = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const [w0, w1] = v.inv(m.x, m.y), path = who === "src" ? "space.source" : "space.receiver";
+    const p = uToP(g, getP(S, path));
+    p[v.axes[0]] = w0; p[v.axes[1]] = w1;
+    const u = pToU(g, p).map(x => Math.min(0.98, Math.max(0.02, x)));
+    setP(S, path, pToU(g, uToP(g, u)).map(R4));          // store the effective (clipped) position
+    refreshAll(); changed();
+  });
+  ["pointerup","pointercancel"].forEach(t => svg.addEventListener(t, () => SPLAN.drag = null));
+  SPLAN.svg = svg;
+  SPLAN.read = el("div",{class:"hint",style:"margin:4px 0 0","data-help":"ui.splan"});
+  return el("div",{}, svg, SPLAN.read);
+}
+function drawSPlan(){
+  const svg = SPLAN.svg; if (!svg || !S) return;
+  const g = sGeom(), vs = sViews(g), ps = uToP(g, S.space.source), pr = uToP(g, S.space.receiver);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const wall = "#7a6f8c", reach = "#4a4258";
+  let h = "";
+  vs.forEach(v => {
+    const P = v.P;
+    if (g.sh === "box"){
+      const [a0, a1] = v.axes, x = v.ox, y = v.oy;
+      h += `<rect x="${x}" y="${y}" width="${v.cw}" height="${v.ch}" fill="none" stroke="${wall}" stroke-width="2" rx="1"/>`;
+      h += `<rect x="${x + 0.02*v.cw}" y="${y + 0.02*v.ch}" width="${0.96*v.cw}" height="${0.96*v.ch}" fill="none" stroke="${reach}" stroke-dasharray="3 3"/>`;
+    } else if (g.sh === "sphere" || v.name === "top"){
+      const rx = g.a*v.s, ry = g.a*v.s*v.ex, [cx, cy] = P([0,0,g.sh === "sphere" ? 0 : g.L/2]);
+      h += `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="none" stroke="${wall}" stroke-width="2"/>`;
+      h += `<ellipse cx="${cx}" cy="${cy}" rx="${0.95*rx}" ry="${0.95*ry}" fill="none" stroke="${reach}" stroke-dasharray="3 3"/>`;
+    } else {                                             // tube lying along z
+      const [x0, yT] = P([g.a,0,0]), [x1, yB] = P([-g.a,0,g.L]);
+      const ends = g.sh === "bottle" ? "closed" : (S.space.ends || (g.sh === "pipe" ? "open" : "closed"));
+      h += `<line x1="${x0}" y1="${yT}" x2="${x1}" y2="${yT}" stroke="${wall}" stroke-width="2"/><line x1="${x0}" y1="${yB}" x2="${x1}" y2="${yB}" stroke="${wall}" stroke-width="2"/>`;
+      h += `<line x1="${x0}" y1="${yT}" x2="${x0}" y2="${yB}" stroke="${wall}" stroke-width="2" ${ends === "open" ? 'stroke-dasharray="2 4" opacity=".6"' : ""}/>`;
+      if (!g.neck) h += `<line x1="${x1}" y1="${yT}" x2="${x1}" y2="${yB}" stroke="${wall}" stroke-width="2" ${ends !== "closed" ? 'stroke-dasharray="2 4" opacity=".6"' : ""}/>`;
+      else {
+        const [nx0, ny0] = P([g.neck[0],0,g.L]), [nx1, ny1] = P([-g.neck[0],0,g.L + g.neck[1]]);
+        h += `<path d="M${x1},${yT} L${x1},${ny0} L${nx1},${ny0} M${x1},${yB} L${x1},${ny1} L${nx1},${ny1}" fill="none" stroke="${wall}" stroke-width="2"/>`;
+      }
+      const [r0, rT] = P([0.95*g.a,0,0.02*g.L]), [r1, rB] = P([-0.95*g.a,0,0.98*g.L]);
+      h += `<rect x="${r0}" y="${rT}" width="${r1 - r0}" height="${rB - rT}" fill="none" stroke="${reach}" stroke-dasharray="3 3"/>`;
+    }
+    const [sx, sy] = P(ps), [rx, ry] = P(pr);
+    h += `<line x1="${sx}" y1="${sy}" x2="${rx}" y2="${ry}" stroke="#4a4258" stroke-dasharray="4 3"/>`;
+    h += `<circle data-who="src" data-view="${v.name}" cx="${sx}" cy="${sy}" r="7" fill="${css("--warn") || "#ffb35f"}" style="cursor:grab"/>`;
+    h += `<circle data-who="rcv" data-view="${v.name}" cx="${rx}" cy="${ry}" r="7" fill="#5fb3ff" style="cursor:grab"/>`;
+    h += `<text x="${v.x0}" y="214" fill="#9a93a8" font-size="9.5">${v.label}${v.ex > 1.01 ? ` · thin axis ×${v.ex.toFixed(v.ex < 10 ? 1 : 0)}` : ""}</text>`;
+  });
+  h += `<text x="10" y="11" fill="#ffb35f" font-size="10">● source</text><text x="62" y="11" fill="#5fb3ff" font-size="10">● mic</text>`;
+  svg.innerHTML = h;
+  const d = Math.hypot(ps[0]-pr[0], ps[1]-pr[1], ps[2]-pr[2]), c = cEff();
+  const size = g.sh === "box" ? g.dims.map(v => fmtLen(v)).join(" × ") : g.sh === "sphere" ? `r ${fmtLen(g.a)}` : `r ${fmtLen(g.a)} × L ${fmtLen(g.L)}`;
+  SPLAN.read.innerHTML = `${size} after Scale · source–mic <b style="color:var(--text)">${fmtLen(d)}</b> · direct sound after <b style="color:var(--text)">${(d/c*1000).toPrecision(3)} ms</b> · dashed = reachable region`;
 }
 
 /* ------------------------------------------------------------------ side panel */
@@ -343,8 +451,9 @@ function build(){
     row("Boundary", seg("space.boundary", ["auto","rigid","soft"])),
     row("Wall thickness", ...num("space.wall_thickness_mm",{min:0.05,max:500,log:true,step:0.01,unit:"mm",auto:true})),
     row("Transmission", ...num("space.transmission",{min:0,max:1,step:0.01})),
-    row("Source xyz (rel)", ...rel3("space.source")),
-    row("Mic xyz (rel)", ...rel3("space.receiver")),
+    el("div",{class:"sub"}, el("h4",{},"Source & mic"), makeSPlan(),
+      row("Source xyz (rel)", ...rel3("space.source")),
+      row("Mic xyz (rel)", ...rel3("space.receiver"))),
     el("div",{class:"sub"}, el("h4",{},"Decay"),
       row("T60", ...num("space.t60",{min:0.02,max:60,log:true,step:0.01,unit:"s",auto:true})),
       row("Decay scale", ...num("space.decay_scale",{min:0.02,max:20,log:true,step:0.01})),
@@ -648,7 +757,7 @@ function mutate(){
   IrgenHelpMode({help: window.IRGEN_HELP, button: $("#helpBtn"), docs: "/strange/docs", status});
   // simple view: the parameters with the most dramatic audible effect
   IrgenSimpleView({toggle: $("#viewToggle"), panel: $("#side"), keys: [
-    "space.shape", "space.radius_m", "space.length_m", "space.dimensions", "space.scale", "ui.readout",
+    "space.shape", "space.radius_m", "space.length_m", "space.dimensions", "space.scale", "ui.readout", "ui.splan",
     "space.medium", "space.void_fraction", "space.wall", "space.decay_scale", "space.t60_floor_s",
     "tuning.mode", "tuning.root", "tuning.scale", "tuning.amount", "imprint.gain_db",
     "echoes.enabled", "echoes.dispersion", "shell.enabled", "motion.glide_oct_per_s", "motion.wobble_cents",

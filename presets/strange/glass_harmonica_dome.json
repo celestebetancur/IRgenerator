@@ -1,0 +1,62 @@
+{
+  "name": "glass_harmonica_dome",
+  "_about": "A glass dome that rings only on a just-intonation C major chord: pure partials, a glass shell tuned to the root, and a slow shimmer between the modes.",
+  "space": {
+    "shape": "sphere",
+    "radius_m": 0.6,
+    "wall": "glass",
+    "receiver": [
+      0.62,
+      0.58,
+      0.47
+    ]
+  },
+  "tuning": {
+    "mode": "replace",
+    "root": "C3",
+    "scale": "custom",
+    "custom_cents": [
+      0,
+      386.31,
+      701.96
+    ],
+    "custom_period_cents": 1200,
+    "range_hz": [
+      120,
+      4200
+    ],
+    "partials": 3,
+    "inharmonicity": 0.0,
+    "tilt_db_per_oct": -4,
+    "ring_s": 14,
+    "root_emphasis_db": 4
+  },
+  "modes": {
+    "detune_cents": 1.5
+  },
+  "shell": {
+    "enabled": true,
+    "f0_hz": 130.81,
+    "count": 24,
+    "gain_db": -16
+  },
+  "diffuse": {
+    "enabled": false
+  },
+  "motion": {
+    "wobble_cents": 4,
+    "wobble_hz": 0.35
+  },
+  "imprint": {
+    "gain_db": 0
+  },
+  "envelope": {
+    "bloom_ms": 25
+  },
+  "direct": {
+    "level_db": -12
+  },
+  "output": {
+    "max_length_s": 16
+  }
+}
